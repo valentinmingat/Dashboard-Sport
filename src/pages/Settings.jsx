@@ -23,7 +23,6 @@ export default function Settings() {
   const [email, setEmail] = useState('')
   const [linkSent, setLinkSent] = useState(false)
   const [loginError, setLoginError] = useState('')
-  const [showPasteLink, setShowPasteLink] = useState(false)
   const [pastedLink, setPastedLink] = useState('')
   const [pasteError, setPasteError] = useState('')
 
@@ -41,8 +40,13 @@ export default function Settings() {
     setPasteError('')
     try {
       await completeLoginWithLink(email.trim(), pastedLink.trim())
-    } catch {
-      setPasteError('Lien invalide ou expiré. Redemande un nouveau lien puis recolle-le ici.')
+      setPastedLink('')
+    } catch (err) {
+      if (err?.code === 'auth/invalid-action-code' || err?.code === 'auth/expired-action-code') {
+        setPasteError('Ce lien a déjà été utilisé ou a expiré. Demande un nouveau lien ci-dessus puis colle-le ici.')
+      } else {
+        setPasteError('Lien invalide. Vérifie que tu as bien copié le lien complet, puis réessaie.')
+      }
     }
   }
 
@@ -148,80 +152,67 @@ export default function Settings() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {linkSent ? (
-                <p className="text-sm text-slate-600 dark:text-slate-300">
-                  Lien envoyé à <span className="font-semibold">{email}</span>. Ouvre l'email et clique le lien pour activer
-                  la sauvegarde automatique.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    Connecte-toi pour sauvegarder automatiquement tes données en ligne et les retrouver sur un autre
-                    appareil.
-                  </p>
-                  <input
-                    type="email"
-                    inputMode="email"
-                    placeholder="ton@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="input"
-                  />
-                  {loginError && <p className="text-xs font-medium text-rose-500">{loginError}</p>}
-                  <button
-                    type="button"
-                    onClick={handleSendLink}
-                    disabled={!email.includes('@')}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
-                  >
-                    <Mail size={15} />
-                    Recevoir un lien de connexion
-                  </button>
-                </div>
-              )}
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Connecte-toi pour sauvegarder automatiquement tes données en ligne — nécessaire à chaque nouvelle
+                installation de l'app (réinstallation, nouvel appareil, Safari) puisque chaque installation a son propre
+                espace de stockage sur iPhone.
+              </p>
 
-              <div className="border-t border-slate-100 pt-3 dark:border-slate-700">
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  1. Recevoir le lien
+                </p>
+                <input
+                  type="email"
+                  inputMode="email"
+                  placeholder="ton@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input"
+                />
+                {loginError && <p className="text-xs font-medium text-rose-500">{loginError}</p>}
                 <button
                   type="button"
-                  onClick={() => setShowPasteLink((v) => !v)}
-                  className="text-xs font-medium text-indigo-500"
+                  onClick={handleSendLink}
+                  disabled={!email.includes('@')}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
                 >
-                  {showPasteLink ? 'Masquer' : "J'ai déjà reçu un lien de connexion"}
+                  <Mail size={15} />
+                  Recevoir un lien de connexion
                 </button>
-                {showPasteLink && (
-                  <div className="mt-3 flex flex-col gap-3">
-                    <p className="text-xs text-slate-400 dark:text-slate-500">
-                      Sur iPhone, l'app installée sur l'écran d'accueil et Safari ne partagent pas leurs données : si tu
-                      t'es déjà connecté ailleurs, colle ici le lien reçu par email pour activer la sync dans cette app
-                      aussi.
-                    </p>
-                    <input
-                      type="email"
-                      inputMode="email"
-                      placeholder="ton@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Colle le lien reçu par email"
-                      value={pastedLink}
-                      onChange={(e) => setPastedLink(e.target.value)}
-                      className="input"
-                    />
-                    {pasteError && <p className="text-xs font-medium text-rose-500">{pasteError}</p>}
-                    <button
-                      type="button"
-                      onClick={handleCompleteWithLink}
-                      disabled={!email.includes('@') || !pastedLink}
-                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-semibold text-white active:scale-[0.98] disabled:opacity-40 dark:bg-slate-600"
-                    >
-                      <Link2 size={15} />
-                      Se connecter avec ce lien
-                    </button>
-                  </div>
+                {linkSent && (
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    Lien envoyé à {email}.
+                  </p>
                 )}
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  2. Valider le lien ici (pas dans l'email)
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  Dans l'email reçu, <span className="font-semibold text-slate-500 dark:text-slate-400">appuie longuement</span>{' '}
+                  sur le lien et choisis <span className="font-semibold text-slate-500 dark:text-slate-400">"Copier le lien"</span> —
+                  n'appuie pas dessus normalement, ça ouvrirait Safari au lieu de cette app. Reviens ici et colle-le :
+                </p>
+                <input
+                  type="text"
+                  placeholder="Colle le lien reçu par email"
+                  value={pastedLink}
+                  onChange={(e) => setPastedLink(e.target.value)}
+                  className="input"
+                />
+                {pasteError && <p className="text-xs font-medium text-rose-500">{pasteError}</p>}
+                <button
+                  type="button"
+                  onClick={handleCompleteWithLink}
+                  disabled={!email.includes('@') || !pastedLink}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-semibold text-white active:scale-[0.98] disabled:opacity-40 dark:bg-slate-600"
+                >
+                  <Link2 size={15} />
+                  Se connecter avec ce lien
+                </button>
               </div>
             </div>
           )}
