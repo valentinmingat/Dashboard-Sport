@@ -1,4 +1,5 @@
 import { addDays, todayISO } from './format'
+import { SESSION_TYPES } from '../data/seed'
 
 export function average(nums) {
   const clean = nums.filter((n) => typeof n === 'number' && !Number.isNaN(n))
@@ -36,6 +37,13 @@ export function attendanceStreak(entries) {
     cursor = addDays(cursor, -1)
   }
   return streak
+}
+
+export function sessionCounts(entries) {
+  return SESSION_TYPES.map((type) => ({
+    type,
+    count: entries.filter((e) => e.session === type).length,
+  }))
 }
 
 export function latestWeight(weight) {

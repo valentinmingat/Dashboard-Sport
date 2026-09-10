@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Utensils, Moon, Flame, Dumbbell, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { average, resultCounts, currentStreak, attendanceStreak } from '../lib/stats'
+import { average, resultCounts, currentStreak, attendanceStreak, sessionCounts } from '../lib/stats'
 import { formatLong, todayISO } from '../lib/format'
 import StatCard from '../components/StatCard'
 import ResultDonut from '../components/ResultDonut'
+import SessionsBarChart from '../components/SessionsBarChart'
 import WeightChart from '../components/WeightChart'
 import Sheet from '../components/Sheet'
 import EntryForm from '../components/EntryForm'
@@ -20,14 +21,12 @@ export default function Dashboard({ onNavigate }) {
   const counts = resultCounts(entries)
   const streak = currentStreak(entries, (e) => e.stretching)
   const attendance = attendanceStreak(entries)
+  const sessions = sessionCounts(entries)
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-4">
       <header className="flex items-center justify-between px-1">
-        <div>
-          <p className="text-sm text-slate-400">{formatLong(today)}</p>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Bonjour 👋</h1>
-        </div>
+        <p className="text-sm text-slate-400">{formatLong(today)}</p>
       </header>
 
       <button
@@ -57,6 +56,11 @@ export default function Dashboard({ onNavigate }) {
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Résultats des journées</h2>
         <ResultDonut counts={counts} />
+      </section>
+
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Répartition des séances</h2>
+        <SessionsBarChart counts={sessions} />
       </section>
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
