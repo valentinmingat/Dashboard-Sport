@@ -66,6 +66,7 @@ export function StoreProvider({ children }) {
   const [state, setState] = useState(loadInitial)
   const [user, setUser] = useState(null)
   const [syncStatus, setSyncStatus] = useState('idle') // idle | syncing | synced | error
+  const [syncError, setSyncError] = useState('')
   const skipNextPush = useRef(false)
 
   useEffect(() => {
@@ -76,38 +77,48 @@ export function StoreProvider({ children }) {
     }
   }, [state])
 
+  // Pull the cloud doc, merge it into whatever is currently local (by date,
+  // most-recently-edited wins), push the merged result back, all against the
+  // live state at call time — never a value captured by an earlier render.
+  const syncWithCloud = useCallback(async (uid) => {
+    setSyncStatus('syncing')
+    setSyncError('')
+    try {
+      const cloud = await pullCloudData(uid)
+      let merged
+      setState((prev) => {
+        merged =
+          cloud && Array.isArray(cloud.entries)
+            ? {
+                entries: mergeEntries(prev.entries, cloud.entries),
+                weight: mergeWeight(prev.weight, cloud.weight ?? seedWeight),
+              }
+            : prev
+        return merged
+      })
+      skipNextPush.current = true
+      await pushCloudData(uid, merged)
+      setSyncStatus('synced')
+    } catch (err) {
+      setSyncStatus('error')
+      setSyncError(err?.code || err?.message || String(err))
+    }
+  }, [])
+
   // Sign in from an email-link redirect, then track auth state.
   useEffect(() => {
     if (!isConfigured()) return
     completeLoginIfNeeded().catch(() => setSyncStatus('error'))
-    const unsubscribe = watchAuth(async (firebaseUser) => {
+    const unsubscribe = watchAuth((firebaseUser) => {
       setUser(firebaseUser)
       if (!firebaseUser) {
         setSyncStatus('idle')
         return
       }
-      setSyncStatus('syncing')
-      try {
-        const cloud = await pullCloudData(firebaseUser.uid)
-        if (cloud && Array.isArray(cloud.entries)) {
-          const merged = {
-            entries: mergeEntries(state.entries, cloud.entries),
-            weight: mergeWeight(state.weight, cloud.weight ?? seedWeight),
-          }
-          skipNextPush.current = true
-          setState(merged)
-          await pushCloudData(firebaseUser.uid, merged)
-        } else {
-          await pushCloudData(firebaseUser.uid, state)
-        }
-        setSyncStatus('synced')
-      } catch {
-        setSyncStatus('error')
-      }
+      syncWithCloud(firebaseUser.uid)
     })
     return unsubscribe
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [syncWithCloud])
 
   // Apply changes made from another device.
   useEffect(() => {
@@ -129,8 +140,14 @@ export function StoreProvider({ children }) {
     }
     setSyncStatus('syncing')
     pushCloudData(user.uid, state)
-      .then(() => setSyncStatus('synced'))
-      .catch(() => setSyncStatus('error'))
+      .then(() => {
+        setSyncStatus('synced')
+        setSyncError('')
+      })
+      .catch((err) => {
+        setSyncStatus('error')
+        setSyncError(err?.code || err?.message || String(err))
+      })
   }, [state, user])
 
   const upsertEntry = useCallback((entry) => {
@@ -201,11 +218,26 @@ export function StoreProvider({ children }) {
       cloudEnabled: isConfigured(),
       user,
       syncStatus,
+      syncError,
+      resync: () => user && syncWithCloud(user.uid),
       sendLoginLink,
       completeLoginWithLink,
       logout: firebaseLogout,
     }),
-    [state, upsertEntry, deleteEntry, addWeightLog, deleteWeightLog, updateGoal, resetAll, replaceAll, user, syncStatus],
+    [
+      state,
+      upsertEntry,
+      deleteEntry,
+      addWeightLog,
+      deleteWeightLog,
+      updateGoal,
+      resetAll,
+      replaceAll,
+      user,
+      syncStatus,
+      syncError,
+      syncWithCloud,
+    ],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

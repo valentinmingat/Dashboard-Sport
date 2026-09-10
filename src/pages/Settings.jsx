@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2 } from 'lucide-react'
+import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2, RefreshCw, AlertTriangle } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayISO } from '../lib/format'
 
@@ -13,6 +13,8 @@ export default function Settings() {
     cloudEnabled,
     user,
     syncStatus,
+    syncError,
+    resync,
     sendLoginLink,
     completeLoginWithLink,
     logout,
@@ -130,7 +132,13 @@ export default function Settings() {
       {cloudEnabled && (
         <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-            {user ? <Cloud size={16} className="text-emerald-500" /> : <CloudOff size={16} className="text-slate-400" />}
+            {user && syncStatus === 'error' ? (
+              <AlertTriangle size={16} className="text-rose-500" />
+            ) : user ? (
+              <Cloud size={16} className="text-emerald-500" />
+            ) : (
+              <CloudOff size={16} className="text-slate-400" />
+            )}
             Synchronisation
           </h2>
           {user ? (
@@ -138,10 +146,23 @@ export default function Settings() {
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Connecté avec <span className="font-semibold">{user.email}</span>
                 <br />
-                <span className="text-xs text-slate-400">
-                  {syncStatus === 'syncing' ? 'Synchronisation en cours…' : 'Sauvegarde automatique activée ✓'}
+                <span
+                  className={`text-xs ${syncStatus === 'error' ? 'font-medium text-rose-500' : 'text-slate-400'}`}
+                >
+                  {syncStatus === 'syncing' && 'Synchronisation en cours…'}
+                  {syncStatus === 'synced' && 'Sauvegarde automatique activée ✓'}
+                  {syncStatus === 'error' && `Échec de la synchronisation (${syncError || 'erreur inconnue'})`}
                 </span>
               </p>
+              <button
+                type="button"
+                onClick={resync}
+                disabled={syncStatus === 'syncing'}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
+              >
+                <RefreshCw size={15} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
+                Resynchroniser maintenant
+              </button>
               <button
                 type="button"
                 onClick={logout}
