@@ -1,3 +1,5 @@
+import { addDays, todayISO } from './format'
+
 export function average(nums) {
   const clean = nums.filter((n) => typeof n === 'number' && !Number.isNaN(n))
   if (!clean.length) return 0
@@ -20,6 +22,18 @@ export function currentStreak(entries, predicate) {
   for (const e of sorted) {
     if (predicate(e)) streak += 1
     else break
+  }
+  return streak
+}
+
+export function attendanceStreak(entries) {
+  const dates = new Set(entries.map((e) => e.date))
+  let cursor = todayISO()
+  if (!dates.has(cursor)) cursor = addDays(cursor, -1)
+  let streak = 0
+  while (dates.has(cursor)) {
+    streak += 1
+    cursor = addDays(cursor, -1)
   }
   return streak
 }

@@ -93,7 +93,7 @@ export default function Weight() {
               value={draft.date}
               max={todayISO()}
               onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))}
-              className="w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              className="input"
             />
           </div>
           <div className="flex flex-col gap-2">

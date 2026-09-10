@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Utensils, Moon, Flame, Scale, ChevronRight } from 'lucide-react'
+import { Utensils, Moon, Flame, Dumbbell, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { average, resultCounts, currentStreak, latestWeight } from '../lib/stats'
+import { average, resultCounts, currentStreak, attendanceStreak } from '../lib/stats'
 import { formatLong, todayISO } from '../lib/format'
 import StatCard from '../components/StatCard'
 import ResultDonut from '../components/ResultDonut'
@@ -19,7 +19,7 @@ export default function Dashboard({ onNavigate }) {
   const avgSleep = average(entries.map((e) => e.sleep))
   const counts = resultCounts(entries)
   const streak = currentStreak(entries, (e) => e.stretching)
-  const current = latestWeight(weight)
+  const attendance = attendanceStreak(entries)
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-4">
@@ -51,7 +51,7 @@ export default function Dashboard({ onNavigate }) {
         <StatCard label="Repas moyen" value={avgMeals} unit="/j" icon={Utensils} accent="from-orange-400 to-amber-500" />
         <StatCard label="Sommeil moyen" value={avgSleep} unit="h" icon={Moon} accent="from-indigo-500 to-violet-500" />
         <StatCard label="Étirements" value={streak} unit="j de suite" icon={Flame} accent="from-rose-500 to-orange-500" />
-        <StatCard label="Poids actuel" value={current} unit={weight.unit} icon={Scale} accent="from-emerald-500 to-teal-500" />
+        <StatCard label="Assiduité" value={attendance} unit="j de suite" icon={Dumbbell} accent="from-violet-500 to-purple-600" />
       </div>
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">

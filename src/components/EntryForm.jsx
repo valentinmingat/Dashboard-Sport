@@ -56,7 +56,7 @@ export default function EntryForm({ date, initial, dateEditable = false, existin
             value={selectedDate}
             max={todayISO()}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 focus:border-indigo-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="input"
           />
           {dateTaken && <span className="text-xs font-medium text-rose-500">Cette date est déjà enregistrée.</span>}
         </Field>
