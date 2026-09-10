@@ -1,12 +1,43 @@
 import { useState } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { RotateCcw, Download, Upload } from 'lucide-react'
 import { useStore } from '../lib/store'
+import { todayISO } from '../lib/format'
 
 export default function Settings() {
-  const { weight, updateGoal, resetAll } = useStore()
+  const { entries, weight, updateGoal, resetAll, replaceAll } = useStore()
   const [form, setForm] = useState(weight)
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
   const [saved, setSaved] = useState(false)
+
+  const handleExport = () => {
+    const data = { entries, weight, exportedAt: new Date().toISOString() }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `sport-track-sauvegarde-${todayISO()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result)
+        if (!Array.isArray(data.entries) || typeof data.weight !== 'object') throw new Error('invalid')
+        if (confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) {
+          replaceAll(data)
+        }
+      } catch {
+        alert('Fichier de sauvegarde invalide.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-4">
@@ -53,6 +84,29 @@ export default function Settings() {
         >
           {saved ? 'Enregistré ✓' : 'Enregistrer'}
         </button>
+      </section>
+
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Sauvegarde</h2>
+        <div className="flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-slate-700 dark:text-slate-200"
+          >
+            <Download size={15} />
+            Exporter mes données
+          </button>
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-slate-700 dark:text-slate-200">
+            <Upload size={15} />
+            Importer une sauvegarde
+            <input type="file" accept="application/json" onChange={handleImport} className="hidden" />
+          </label>
+        </div>
+        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+          Tes données ne sont stockées que sur cet appareil. Exporte une sauvegarde de temps en temps, et surtout avant de
+          réinstaller l'app sur ton écran d'accueil.
+        </p>
       </section>
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">

@@ -73,6 +73,13 @@ export function StoreProvider({ children }) {
     setState({ entries: seedEntries, weight: seedWeight })
   }, [])
 
+  const replaceAll = useCallback((data) => {
+    setState({
+      entries: Array.isArray(data.entries) ? data.entries : seedEntries,
+      weight: data.weight && typeof data.weight === 'object' ? data.weight : seedWeight,
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
       entries: state.entries,
@@ -83,8 +90,9 @@ export function StoreProvider({ children }) {
       deleteWeightLog,
       updateGoal,
       resetAll,
+      replaceAll,
     }),
-    [state, upsertEntry, deleteEntry, addWeightLog, deleteWeightLog, updateGoal, resetAll],
+    [state, upsertEntry, deleteEntry, addWeightLog, deleteWeightLog, updateGoal, resetAll, replaceAll],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
