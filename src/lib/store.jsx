@@ -14,6 +14,42 @@ import {
 
 const STORAGE_KEY = 'sport-track:v1'
 
+function countFilled(obj) {
+  return Object.values(obj).filter((v) => v !== null && v !== undefined && v !== '').length
+}
+
+// Union by date; on conflict prefer the more recently edited side, falling
+// back to whichever version has more fields filled in (a fresher device
+// pulling stub/seed data from a cloud that was seeded by an empty install
+// must not let that stub win over real local data).
+function mergeEntries(local, cloud) {
+  const map = new Map()
+  for (const e of cloud) map.set(e.date, e)
+  for (const e of local) {
+    const existing = map.get(e.date)
+    if (!existing) {
+      map.set(e.date, e)
+      continue
+    }
+    const localTime = e.updatedAt ?? 0
+    const cloudTime = existing.updatedAt ?? 0
+    if (localTime !== cloudTime) {
+      map.set(e.date, localTime > cloudTime ? e : existing)
+    } else if (countFilled(e) >= countFilled(existing)) {
+      map.set(e.date, e)
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => (a.date < b.date ? 1 : -1))
+}
+
+function mergeWeight(local, cloud) {
+  const logsMap = new Map()
+  for (const l of cloud.logs ?? []) logsMap.set(l.date, l)
+  for (const l of local.logs ?? []) logsMap.set(l.date, l)
+  const logs = Array.from(logsMap.values()).sort((a, b) => (a.date > b.date ? 1 : -1))
+  return { ...cloud, ...local, logs }
+}
+
 function loadInitial() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -54,8 +90,13 @@ export function StoreProvider({ children }) {
       try {
         const cloud = await pullCloudData(firebaseUser.uid)
         if (cloud && Array.isArray(cloud.entries)) {
+          const merged = {
+            entries: mergeEntries(state.entries, cloud.entries),
+            weight: mergeWeight(state.weight, cloud.weight ?? seedWeight),
+          }
           skipNextPush.current = true
-          setState({ entries: cloud.entries, weight: cloud.weight ?? seedWeight })
+          setState(merged)
+          await pushCloudData(firebaseUser.uid, merged)
         } else {
           await pushCloudData(firebaseUser.uid, state)
         }
@@ -97,9 +138,9 @@ export function StoreProvider({ children }) {
       const idx = prev.entries.findIndex((e) => e.date === entry.date)
       const entries = [...prev.entries]
       if (idx >= 0) {
-        entries[idx] = { ...entries[idx], ...entry }
+        entries[idx] = { ...entries[idx], ...entry, updatedAt: Date.now() }
       } else {
-        entries.push({ id: `e-${Date.now()}`, ...entry })
+        entries.push({ id: `e-${Date.now()}`, ...entry, updatedAt: Date.now() })
       }
       entries.sort((a, b) => (a.date < b.date ? 1 : -1))
       return { ...prev, entries }
