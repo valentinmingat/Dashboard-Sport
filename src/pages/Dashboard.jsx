@@ -48,10 +48,10 @@ export default function Dashboard({ onNavigate }) {
       </button>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Repas moyen" value={avgMeals} unit="/j" icon={Utensils} accent="from-orange-400 to-amber-500" />
-        <StatCard label="Sommeil moyen" value={avgSleep} unit="h" icon={Moon} accent="from-indigo-500 to-violet-500" />
+        <StatCard label="Repas moyen" value={avgMeals} unit="/j" icon={Utensils} accent="from-amber-400 to-orange-600" />
+        <StatCard label="Sommeil moyen" value={avgSleep} unit="h" icon={Moon} accent="from-blue-500 to-violet-600" />
         <StatCard label="Étirements" value={streak} unit="j de suite" icon={Flame} accent="from-rose-500 to-orange-500" />
-        <StatCard label="Assiduité" value={attendance} unit="j de suite" icon={Dumbbell} accent="from-violet-500 to-purple-600" />
+        <StatCard label="Assiduité" value={attendance} unit="j de suite" icon={Dumbbell} accent="from-rose-500 to-pink-600" />
       </div>
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">

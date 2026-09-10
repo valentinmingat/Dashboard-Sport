@@ -14,7 +14,7 @@ export default function Settings() {
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Réglages</h1>
       </header>
 
-      <section className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Objectif de poids</h2>
 
         <Row label="Date de départ">
@@ -55,7 +55,7 @@ export default function Settings() {
         </button>
       </section>
 
-      <section className="rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Données</h2>
         <button
           type="button"
@@ -78,8 +78,8 @@ export default function Settings() {
 
 function Row({ label, children }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+    <label className="flex flex-col gap-2">
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</span>
       {children}
     </label>
   )

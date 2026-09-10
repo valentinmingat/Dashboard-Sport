@@ -1,4 +1,4 @@
-import { ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot, CartesianGrid } from 'recharts'
+import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, CartesianGrid } from 'recharts'
 import { parseISO, formatShort } from '../lib/format'
 
 export default function WeightChart({ weight }) {
@@ -31,11 +31,6 @@ export default function WeightChart({ weight }) {
             minTickGap={40}
           />
           <YAxis domain={[min, max]} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={30} tickMargin={4} />
-          <Tooltip
-            labelFormatter={(t) => formatShort(new Date(t).toISOString().slice(0, 10))}
-            formatter={(v, name) => [`${v} kg`, name === 'actual' ? 'Poids' : 'Objectif']}
-            contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', fontSize: 13 }}
-          />
           <Line type="monotone" dataKey="target" stroke="#c7d2fe" strokeWidth={2} strokeDasharray="5 5" dot={false} />
           <Line
             type="monotone"

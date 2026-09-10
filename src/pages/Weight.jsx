@@ -65,7 +65,7 @@ export default function Weight() {
         {sortedLogs.map((log) => (
           <div
             key={log.id}
-            className="flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none"
+            className="animate-pop flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none"
           >
             <span className="text-sm text-slate-500 dark:text-slate-400">{formatShort(log.date)}</span>
             <div className="flex items-center gap-3">
