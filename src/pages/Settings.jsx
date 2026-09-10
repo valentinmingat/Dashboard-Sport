@@ -1,13 +1,27 @@
 import { useState } from 'react'
-import { RotateCcw, Download, Upload } from 'lucide-react'
+import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayISO } from '../lib/format'
 
 export default function Settings() {
-  const { entries, weight, updateGoal, resetAll, replaceAll } = useStore()
+  const { entries, weight, updateGoal, resetAll, replaceAll, cloudEnabled, user, syncStatus, sendLoginLink, logout } =
+    useStore()
   const [form, setForm] = useState(weight)
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
   const [saved, setSaved] = useState(false)
+  const [email, setEmail] = useState('')
+  const [linkSent, setLinkSent] = useState(false)
+  const [loginError, setLoginError] = useState('')
+
+  const handleSendLink = async () => {
+    setLoginError('')
+    try {
+      await sendLoginLink(email.trim())
+      setLinkSent(true)
+    } catch {
+      setLoginError("Impossible d'envoyer le lien. Vérifie l'adresse email.")
+    }
+  }
 
   const handleExport = () => {
     const data = { entries, weight, exportedAt: new Date().toISOString() }
@@ -86,6 +100,62 @@ export default function Settings() {
         </button>
       </section>
 
+      {cloudEnabled && (
+        <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {user ? <Cloud size={16} className="text-emerald-500" /> : <CloudOff size={16} className="text-slate-400" />}
+            Synchronisation
+          </h2>
+          {user ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Connecté avec <span className="font-semibold">{user.email}</span>
+                <br />
+                <span className="text-xs text-slate-400">
+                  {syncStatus === 'syncing' ? 'Synchronisation en cours…' : 'Sauvegarde automatique activée ✓'}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={logout}
+                className="w-full rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-slate-700 dark:text-slate-200"
+              >
+                Se déconnecter
+              </button>
+            </div>
+          ) : linkSent ? (
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Lien envoyé à <span className="font-semibold">{email}</span>. Ouvre l'email sur ce téléphone et clique le lien
+              pour activer la sauvegarde automatique.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Connecte-toi pour sauvegarder automatiquement tes données en ligne et les retrouver sur un autre appareil.
+              </p>
+              <input
+                type="email"
+                inputMode="email"
+                placeholder="ton@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="input"
+              />
+              {loginError && <p className="text-xs font-medium text-rose-500">{loginError}</p>}
+              <button
+                type="button"
+                onClick={handleSendLink}
+                disabled={!email.includes('@')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
+              >
+                <Mail size={15} />
+                Recevoir un lien de connexion
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Sauvegarde</h2>
         <div className="flex flex-col gap-2.5">
@@ -104,8 +174,9 @@ export default function Settings() {
           </label>
         </div>
         <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-          Tes données ne sont stockées que sur cet appareil. Exporte une sauvegarde de temps en temps, et surtout avant de
-          réinstaller l'app sur ton écran d'accueil.
+          {user
+            ? 'Sauvegarde locale complémentaire, en plus de la synchronisation en ligne ci-dessus.'
+            : "Tes données ne sont stockées que sur cet appareil. Exporte une sauvegarde de temps en temps, et surtout avant de réinstaller l'app sur ton écran d'accueil."}
         </p>
       </section>
 
@@ -124,7 +195,7 @@ export default function Settings() {
       </section>
 
       <p className="px-1 text-center text-xs text-slate-300 dark:text-slate-600">
-        Sport Track · données stockées localement sur cet appareil
+        Sport Track · {user ? 'données synchronisées en ligne' : 'données stockées localement sur cet appareil'}
       </p>
     </div>
   )

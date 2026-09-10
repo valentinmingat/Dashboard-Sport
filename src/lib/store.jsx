@@ -1,5 +1,15 @@
-import { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { seedEntries, seedWeight } from '../data/seed'
+import {
+  isConfigured,
+  watchAuth,
+  completeLoginIfNeeded,
+  sendLoginLink,
+  logout as firebaseLogout,
+  pullCloudData,
+  pushCloudData,
+  subscribeCloudData,
+} from './firebase'
 
 const STORAGE_KEY = 'sport-track:v1'
 
@@ -17,6 +27,9 @@ const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
   const [state, setState] = useState(loadInitial)
+  const [user, setUser] = useState(null)
+  const [syncStatus, setSyncStatus] = useState('idle') // idle | syncing | synced | error
+  const skipNextPush = useRef(false)
 
   useEffect(() => {
     try {
@@ -25,6 +38,58 @@ export function StoreProvider({ children }) {
       // storage unavailable (private mode, quota) — app still works in-memory
     }
   }, [state])
+
+  // Sign in from an email-link redirect, then track auth state.
+  useEffect(() => {
+    if (!isConfigured()) return
+    completeLoginIfNeeded().catch(() => setSyncStatus('error'))
+    const unsubscribe = watchAuth(async (firebaseUser) => {
+      setUser(firebaseUser)
+      if (!firebaseUser) {
+        setSyncStatus('idle')
+        return
+      }
+      setSyncStatus('syncing')
+      try {
+        const cloud = await pullCloudData(firebaseUser.uid)
+        if (cloud && Array.isArray(cloud.entries)) {
+          skipNextPush.current = true
+          setState({ entries: cloud.entries, weight: cloud.weight ?? seedWeight })
+        } else {
+          await pushCloudData(firebaseUser.uid, state)
+        }
+        setSyncStatus('synced')
+      } catch {
+        setSyncStatus('error')
+      }
+    })
+    return unsubscribe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Apply changes made from another device.
+  useEffect(() => {
+    if (!user) return
+    const unsubscribe = subscribeCloudData(user.uid, (data, isLocalWrite) => {
+      if (isLocalWrite) return
+      skipNextPush.current = true
+      setState({ entries: data.entries ?? [], weight: data.weight ?? seedWeight })
+    })
+    return unsubscribe
+  }, [user])
+
+  // Push local changes to the cloud once signed in.
+  useEffect(() => {
+    if (!user) return
+    if (skipNextPush.current) {
+      skipNextPush.current = false
+      return
+    }
+    setSyncStatus('syncing')
+    pushCloudData(user.uid, state)
+      .then(() => setSyncStatus('synced'))
+      .catch(() => setSyncStatus('error'))
+  }, [state, user])
 
   const upsertEntry = useCallback((entry) => {
     setState((prev) => {
@@ -91,8 +156,13 @@ export function StoreProvider({ children }) {
       updateGoal,
       resetAll,
       replaceAll,
+      cloudEnabled: isConfigured(),
+      user,
+      syncStatus,
+      sendLoginLink,
+      logout: firebaseLogout,
     }),
-    [state, upsertEntry, deleteEntry, addWeightLog, deleteWeightLog, updateGoal, resetAll, replaceAll],
+    [state, upsertEntry, deleteEntry, addWeightLog, deleteWeightLog, updateGoal, resetAll, replaceAll, user, syncStatus],
   )
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
