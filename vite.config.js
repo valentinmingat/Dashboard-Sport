@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/Dashboard-Sport/',
   plugins: [react(), tailwindcss()],
   server: {
     host: true,
