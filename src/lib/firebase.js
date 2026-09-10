@@ -49,6 +49,13 @@ export async function completeLoginIfNeeded() {
   window.history.replaceState({}, '', window.location.pathname)
 }
 
+export async function completeLoginWithLink(email, link) {
+  if (!auth) throw new Error('Firebase not configured')
+  if (!isSignInWithEmailLink(auth, link)) throw new Error('Not a valid sign-in link')
+  await signInWithEmailLink(auth, email, link)
+  window.localStorage.removeItem(PENDING_EMAIL_KEY)
+}
+
 export async function logout() {
   if (!auth) return
   await signOut(auth)

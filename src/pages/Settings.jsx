@@ -1,17 +1,31 @@
 import { useState } from 'react'
-import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail } from 'lucide-react'
+import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2 } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayISO } from '../lib/format'
 
 export default function Settings() {
-  const { entries, weight, updateGoal, resetAll, replaceAll, cloudEnabled, user, syncStatus, sendLoginLink, logout } =
-    useStore()
+  const {
+    entries,
+    weight,
+    updateGoal,
+    resetAll,
+    replaceAll,
+    cloudEnabled,
+    user,
+    syncStatus,
+    sendLoginLink,
+    completeLoginWithLink,
+    logout,
+  } = useStore()
   const [form, setForm] = useState(weight)
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
   const [saved, setSaved] = useState(false)
   const [email, setEmail] = useState('')
   const [linkSent, setLinkSent] = useState(false)
   const [loginError, setLoginError] = useState('')
+  const [showPasteLink, setShowPasteLink] = useState(false)
+  const [pastedLink, setPastedLink] = useState('')
+  const [pasteError, setPasteError] = useState('')
 
   const handleSendLink = async () => {
     setLoginError('')
@@ -20,6 +34,15 @@ export default function Settings() {
       setLinkSent(true)
     } catch {
       setLoginError("Impossible d'envoyer le lien. Vérifie l'adresse email.")
+    }
+  }
+
+  const handleCompleteWithLink = async () => {
+    setPasteError('')
+    try {
+      await completeLoginWithLink(email.trim(), pastedLink.trim())
+    } catch {
+      setPasteError('Lien invalide ou expiré. Redemande un nouveau lien puis recolle-le ici.')
     }
   }
 
@@ -123,34 +146,83 @@ export default function Settings() {
                 Se déconnecter
               </button>
             </div>
-          ) : linkSent ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              Lien envoyé à <span className="font-semibold">{email}</span>. Ouvre l'email sur ce téléphone et clique le lien
-              pour activer la sauvegarde automatique.
-            </p>
           ) : (
-            <div className="flex flex-col gap-3">
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                Connecte-toi pour sauvegarder automatiquement tes données en ligne et les retrouver sur un autre appareil.
-              </p>
-              <input
-                type="email"
-                inputMode="email"
-                placeholder="ton@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input"
-              />
-              {loginError && <p className="text-xs font-medium text-rose-500">{loginError}</p>}
-              <button
-                type="button"
-                onClick={handleSendLink}
-                disabled={!email.includes('@')}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
-              >
-                <Mail size={15} />
-                Recevoir un lien de connexion
-              </button>
+            <div className="flex flex-col gap-4">
+              {linkSent ? (
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Lien envoyé à <span className="font-semibold">{email}</span>. Ouvre l'email et clique le lien pour activer
+                  la sauvegarde automatique.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Connecte-toi pour sauvegarder automatiquement tes données en ligne et les retrouver sur un autre
+                    appareil.
+                  </p>
+                  <input
+                    type="email"
+                    inputMode="email"
+                    placeholder="ton@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input"
+                  />
+                  {loginError && <p className="text-xs font-medium text-rose-500">{loginError}</p>}
+                  <button
+                    type="button"
+                    onClick={handleSendLink}
+                    disabled={!email.includes('@')}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
+                  >
+                    <Mail size={15} />
+                    Recevoir un lien de connexion
+                  </button>
+                </div>
+              )}
+
+              <div className="border-t border-slate-100 pt-3 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setShowPasteLink((v) => !v)}
+                  className="text-xs font-medium text-indigo-500"
+                >
+                  {showPasteLink ? 'Masquer' : "J'ai déjà reçu un lien de connexion"}
+                </button>
+                {showPasteLink && (
+                  <div className="mt-3 flex flex-col gap-3">
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      Sur iPhone, l'app installée sur l'écran d'accueil et Safari ne partagent pas leurs données : si tu
+                      t'es déjà connecté ailleurs, colle ici le lien reçu par email pour activer la sync dans cette app
+                      aussi.
+                    </p>
+                    <input
+                      type="email"
+                      inputMode="email"
+                      placeholder="ton@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Colle le lien reçu par email"
+                      value={pastedLink}
+                      onChange={(e) => setPastedLink(e.target.value)}
+                      className="input"
+                    />
+                    {pasteError && <p className="text-xs font-medium text-rose-500">{pasteError}</p>}
+                    <button
+                      type="button"
+                      onClick={handleCompleteWithLink}
+                      disabled={!email.includes('@') || !pastedLink}
+                      className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-semibold text-white active:scale-[0.98] disabled:opacity-40 dark:bg-slate-600"
+                    >
+                      <Link2 size={15} />
+                      Se connecter avec ce lien
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>
