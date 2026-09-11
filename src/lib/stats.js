@@ -1,4 +1,3 @@
-import { addDays, todayISO } from './format'
 import { SESSION_TYPES } from '../data/seed'
 
 export function average(nums) {
@@ -27,16 +26,19 @@ export function currentStreak(entries, predicate) {
   return streak
 }
 
-export function attendanceStreak(entries) {
-  const dates = new Set(entries.map((e) => e.date))
-  let cursor = todayISO()
-  if (!dates.has(cursor)) cursor = addDays(cursor, -1)
-  let streak = 0
-  while (dates.has(cursor)) {
-    streak += 1
-    cursor = addDays(cursor, -1)
+export function bestStreak(entries, predicate) {
+  const sorted = [...entries].sort((a, b) => (a.date < b.date ? 1 : -1))
+  let best = 0
+  let current = 0
+  for (const e of sorted) {
+    if (predicate(e)) {
+      current += 1
+      best = Math.max(best, current)
+    } else {
+      current = 0
+    }
   }
-  return streak
+  return best
 }
 
 export function sessionCounts(entries) {

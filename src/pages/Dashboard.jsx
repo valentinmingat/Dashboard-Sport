@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Utensils, Moon, Flame, Dumbbell, ChevronRight } from 'lucide-react'
+import { Utensils, Moon, Flame, Dumbbell, Trophy, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { average, resultCounts, currentStreak, attendanceStreak, sessionCounts } from '../lib/stats'
+import { average, resultCounts, currentStreak, bestStreak, sessionCounts } from '../lib/stats'
 import { formatLong, todayISO } from '../lib/format'
 import StatCard from '../components/StatCard'
 import ResultDonut from '../components/ResultDonut'
@@ -20,7 +20,9 @@ export default function Dashboard({ onNavigate }) {
   const avgSleep = average(entries.map((e) => e.sleep))
   const counts = resultCounts(entries)
   const streak = currentStreak(entries, (e) => e.stretching)
-  const attendance = attendanceStreak(entries)
+  const bestStretchingStreak = bestStreak(entries, (e) => e.stretching)
+  const attendance = currentStreak(entries, () => true)
+  const bestAttendanceStreak = bestStreak(entries, () => true)
   const sessions = sessionCounts(entries)
 
   return (
@@ -49,8 +51,22 @@ export default function Dashboard({ onNavigate }) {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Repas moyen" value={avgMeals} unit="/j" icon={Utensils} accent="from-amber-400 to-orange-600" />
         <StatCard label="Sommeil moyen" value={avgSleep} unit="h" icon={Moon} accent="from-blue-500 to-violet-600" />
-        <StatCard label="Étirements" value={streak} unit="j de suite" icon={Flame} accent="from-rose-500 to-orange-500" />
-        <StatCard label="Assiduité" value={attendance} unit="j de suite" icon={Dumbbell} accent="from-rose-500 to-pink-600" />
+
+        <div className="flex flex-col gap-2">
+          <StatCard label="Étirements" value={streak} unit="j de suite" icon={Flame} accent="from-rose-500 to-orange-500" />
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-rose-50 py-2 text-xs font-semibold text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
+            <Trophy size={12} />
+            Record : {bestStretchingStreak} j
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <StatCard label="Assiduité" value={attendance} unit="j de suite" icon={Dumbbell} accent="from-rose-500 to-pink-600" />
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-pink-50 py-2 text-xs font-semibold text-pink-600 dark:bg-pink-500/10 dark:text-pink-400">
+            <Trophy size={12} />
+            Record : {bestAttendanceStreak} j
+          </div>
+        </div>
       </div>
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">

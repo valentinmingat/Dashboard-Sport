@@ -4,7 +4,7 @@ const COLORS = { Bon: '#10b981', Neutre: '#f59e0b', Mauvais: '#f43f5e' }
 
 export default function ResultDonut({ counts }) {
   const total = counts.Bon + counts.Neutre + counts.Mauvais
-  const data = ['Bon', 'Neutre', 'Mauvais'].map((k) => ({ name: k, value: counts[k] }))
+  const data = ['Bon', 'Neutre', 'Mauvais'].map((k) => ({ name: k, value: counts[k] })).filter((d) => d.value > 0)
   const hasData = total > 0
 
   return (
