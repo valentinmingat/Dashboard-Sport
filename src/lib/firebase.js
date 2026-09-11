@@ -7,7 +7,16 @@ import {
   onAuthStateChanged,
   signOut,
 } from 'firebase/auth'
-import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  collection,
+  onSnapshot,
+} from 'firebase/firestore'
 import { firebaseConfig, isFirebaseConfigured } from './firebaseConfig'
 
 const PENDING_EMAIL_KEY = 'sport-track:pending-email'
@@ -61,18 +70,76 @@ export async function logout() {
   await signOut(auth)
 }
 
-export async function pullCloudData(uid) {
-  const snap = await getDoc(doc(db, 'users', uid))
+// --- Journal entries: one document per date, so every device's entries
+// union automatically instead of needing a client-side array merge. ---
+
+export async function fetchEntriesOnce(uid) {
+  const snap = await getDocs(collection(db, 'users', uid, 'entries'))
+  return snap.docs.map((d) => d.data())
+}
+
+export async function writeCloudEntry(uid, entry) {
+  await setDoc(doc(db, 'users', uid, 'entries', entry.date), entry)
+}
+
+export async function deleteCloudEntry(uid, date) {
+  await deleteDoc(doc(db, 'users', uid, 'entries', date))
+}
+
+export function subscribeEntries(uid, callback) {
+  return onSnapshot(collection(db, 'users', uid, 'entries'), (snap) => {
+    callback(
+      snap.docs.map((d) => d.data()),
+      snap.metadata.hasPendingWrites,
+    )
+  })
+}
+
+// --- Weight: goal settings as a single small doc, logs as one doc per date
+// for the same union-friendly reason as entries. ---
+
+export async function fetchGoalOnce(uid) {
+  const snap = await getDoc(doc(db, 'users', uid, 'weight'))
   return snap.exists() ? snap.data() : null
 }
 
-export async function pushCloudData(uid, data) {
-  await setDoc(doc(db, 'users', uid), { ...data, updatedAt: Date.now() })
+export async function writeCloudGoal(uid, goal) {
+  await setDoc(doc(db, 'users', uid, 'weight'), goal)
 }
 
-export function subscribeCloudData(uid, callback) {
-  return onSnapshot(doc(db, 'users', uid), (snap) => {
+export function subscribeGoal(uid, callback) {
+  return onSnapshot(doc(db, 'users', uid, 'weight'), (snap) => {
     if (!snap.exists()) return
     callback(snap.data(), snap.metadata.hasPendingWrites)
   })
+}
+
+export async function fetchWeightLogsOnce(uid) {
+  const snap = await getDocs(collection(db, 'users', uid, 'weightLogs'))
+  return snap.docs.map((d) => d.data())
+}
+
+export async function writeCloudWeightLog(uid, log) {
+  await setDoc(doc(db, 'users', uid, 'weightLogs', log.date), log)
+}
+
+export async function deleteCloudWeightLog(uid, date) {
+  await deleteDoc(doc(db, 'users', uid, 'weightLogs', date))
+}
+
+export function subscribeWeightLogs(uid, callback) {
+  return onSnapshot(collection(db, 'users', uid, 'weightLogs'), (snap) => {
+    callback(
+      snap.docs.map((d) => d.data()),
+      snap.metadata.hasPendingWrites,
+    )
+  })
+}
+
+// --- One-off migration from the old single-document format
+// (users/{uid} holding the whole { entries, weight } blob). ---
+
+export async function fetchLegacyDoc(uid) {
+  const snap = await getDoc(doc(db, 'users', uid))
+  return snap.exists() ? snap.data() : null
 }

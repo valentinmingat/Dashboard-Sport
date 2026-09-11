@@ -7,47 +7,24 @@ import {
   sendLoginLink,
   completeLoginWithLink,
   logout as firebaseLogout,
-  pullCloudData,
-  pushCloudData,
-  subscribeCloudData,
+  fetchEntriesOnce,
+  writeCloudEntry,
+  deleteCloudEntry,
+  subscribeEntries,
+  fetchGoalOnce,
+  writeCloudGoal,
+  subscribeGoal,
+  fetchWeightLogsOnce,
+  writeCloudWeightLog,
+  deleteCloudWeightLog,
+  subscribeWeightLogs,
+  fetchLegacyDoc,
 } from './firebase'
 
 const STORAGE_KEY = 'sport-track:v1'
 
 function countFilled(obj) {
   return Object.values(obj).filter((v) => v !== null && v !== undefined && v !== '').length
-}
-
-// Union by date; on conflict prefer the more recently edited side, falling
-// back to whichever version has more fields filled in (a fresher device
-// pulling stub/seed data from a cloud that was seeded by an empty install
-// must not let that stub win over real local data).
-function mergeEntries(local, cloud) {
-  const map = new Map()
-  for (const e of cloud) map.set(e.date, e)
-  for (const e of local) {
-    const existing = map.get(e.date)
-    if (!existing) {
-      map.set(e.date, e)
-      continue
-    }
-    const localTime = e.updatedAt ?? 0
-    const cloudTime = existing.updatedAt ?? 0
-    if (localTime !== cloudTime) {
-      map.set(e.date, localTime > cloudTime ? e : existing)
-    } else if (countFilled(e) >= countFilled(existing)) {
-      map.set(e.date, e)
-    }
-  }
-  return Array.from(map.values()).sort((a, b) => (a.date < b.date ? 1 : -1))
-}
-
-function mergeWeight(local, cloud) {
-  const logsMap = new Map()
-  for (const l of cloud.logs ?? []) logsMap.set(l.date, l)
-  for (const l of local.logs ?? []) logsMap.set(l.date, l)
-  const logs = Array.from(logsMap.values()).sort((a, b) => (a.date > b.date ? 1 : -1))
-  return { ...cloud, ...local, logs }
 }
 
 function loadInitial() {
@@ -60,6 +37,10 @@ function loadInitial() {
   return { entries: seedEntries, weight: seedWeight }
 }
 
+function describeError(err) {
+  return err?.code || err?.message || String(err)
+}
+
 const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
@@ -67,7 +48,16 @@ export function StoreProvider({ children }) {
   const [user, setUser] = useState(null)
   const [syncStatus, setSyncStatus] = useState('idle') // idle | syncing | synced | error
   const [syncError, setSyncError] = useState('')
-  const skipNextPush = useRef(false)
+  const stateRef = useRef(state)
+  const userRef = useRef(null)
+
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
+
+  useEffect(() => {
+    userRef.current = user
+  }, [user])
 
   useEffect(() => {
     try {
@@ -77,31 +67,68 @@ export function StoreProvider({ children }) {
     }
   }, [state])
 
-  // Pull the cloud doc, merge it into whatever is currently local (by date,
-  // most-recently-edited wins), push the merged result back, all against the
-  // live state at call time — never a value captured by an earlier render.
-  const syncWithCloud = useCallback(async (uid) => {
+  // One-time reconciliation of whatever is currently local into the cloud
+  // (per-date entries/weight-logs collections + one goal doc), resolving
+  // conflicts only where a date genuinely exists on both sides. Everything
+  // that exists only in the cloud needs no handling here at all: the live
+  // subscriptions set up right after this always reflect the full set of
+  // documents, from every device that has ever written one.
+  const reconcileWithCloud = useCallback(async (uid) => {
     setSyncStatus('syncing')
     setSyncError('')
     try {
-      const cloud = await pullCloudData(uid)
-      let merged
-      setState((prev) => {
-        merged =
-          cloud && Array.isArray(cloud.entries)
-            ? {
-                entries: mergeEntries(prev.entries, cloud.entries),
-                weight: mergeWeight(prev.weight, cloud.weight ?? seedWeight),
-              }
-            : prev
-        return merged
-      })
-      skipNextPush.current = true
-      await pushCloudData(uid, merged)
+      let cloudEntries = await fetchEntriesOnce(uid)
+      let cloudGoal = await fetchGoalOnce(uid)
+      let cloudLogs = await fetchWeightLogsOnce(uid)
+
+      // One-off migration from the old single-document { entries, weight }
+      // format, if this account still has data there and nothing yet in
+      // the new collections.
+      if (cloudEntries.length === 0 && cloudLogs.length === 0 && !cloudGoal) {
+        const legacy = await fetchLegacyDoc(uid)
+        if (legacy && Array.isArray(legacy.entries) && legacy.entries.length > 0) {
+          await Promise.all(legacy.entries.map((e) => writeCloudEntry(uid, e)))
+          cloudEntries = legacy.entries
+        }
+        if (legacy?.weight) {
+          const { logs, ...goal } = legacy.weight
+          await writeCloudGoal(uid, goal)
+          cloudGoal = goal
+          if (Array.isArray(logs) && logs.length > 0) {
+            await Promise.all(logs.map((l) => writeCloudWeightLog(uid, l)))
+            cloudLogs = logs
+          }
+        }
+      }
+
+      const cloudEntryMap = new Map(cloudEntries.map((e) => [e.date, e]))
+      await Promise.all(
+        stateRef.current.entries.map((local) => {
+          const cloud = cloudEntryMap.get(local.date)
+          if (!cloud) return writeCloudEntry(uid, local)
+          const localTime = local.updatedAt ?? 0
+          const cloudTime = cloud.updatedAt ?? 0
+          const localWins = localTime !== cloudTime ? localTime > cloudTime : countFilled(local) > countFilled(cloud)
+          return localWins ? writeCloudEntry(uid, local) : null
+        }),
+      )
+
+      if (!cloudGoal) {
+        const { logs: _logs, ...goal } = stateRef.current.weight
+        await writeCloudGoal(uid, goal)
+      }
+
+      const cloudLogMap = new Map(cloudLogs.map((l) => [l.date, l]))
+      await Promise.all(
+        (stateRef.current.weight.logs ?? [])
+          .filter((l) => !cloudLogMap.has(l.date))
+          .map((l) => writeCloudWeightLog(uid, l)),
+      )
+
       setSyncStatus('synced')
     } catch (err) {
       setSyncStatus('error')
-      setSyncError(err?.code || err?.message || String(err))
+      setSyncError(describeError(err))
     }
   }, [])
 
@@ -115,93 +142,142 @@ export function StoreProvider({ children }) {
         setSyncStatus('idle')
         return
       }
-      syncWithCloud(firebaseUser.uid)
+      reconcileWithCloud(firebaseUser.uid)
     })
     return unsubscribe
-  }, [syncWithCloud])
+  }, [reconcileWithCloud])
 
-  // Apply changes made from another device.
+  // Live subscriptions: once signed in, these are the ongoing source of
+  // truth, naturally unioning whatever any device has written.
   useEffect(() => {
     if (!user) return
-    const unsubscribe = subscribeCloudData(user.uid, (data, isLocalWrite) => {
+    const unsubEntries = subscribeEntries(user.uid, (entries, isLocalWrite) => {
       if (isLocalWrite) return
-      skipNextPush.current = true
-      setState({ entries: data.entries ?? [], weight: data.weight ?? seedWeight })
+      setState((prev) => ({ ...prev, entries: [...entries].sort((a, b) => (a.date < b.date ? 1 : -1)) }))
     })
-    return unsubscribe
+    const unsubGoal = subscribeGoal(user.uid, (goal, isLocalWrite) => {
+      if (isLocalWrite) return
+      setState((prev) => ({ ...prev, weight: { ...prev.weight, ...goal } }))
+    })
+    const unsubLogs = subscribeWeightLogs(user.uid, (logs, isLocalWrite) => {
+      if (isLocalWrite) return
+      setState((prev) => ({
+        ...prev,
+        weight: { ...prev.weight, logs: [...logs].sort((a, b) => (a.date > b.date ? 1 : -1)) },
+      }))
+    })
+    return () => {
+      unsubEntries()
+      unsubGoal()
+      unsubLogs()
+    }
   }, [user])
 
-  // Push local changes to the cloud once signed in.
-  useEffect(() => {
-    if (!user) return
-    if (skipNextPush.current) {
-      skipNextPush.current = false
-      return
-    }
-    setSyncStatus('syncing')
-    pushCloudData(user.uid, state)
-      .then(() => {
-        setSyncStatus('synced')
-        setSyncError('')
-      })
-      .catch((err) => {
-        setSyncStatus('error')
-        setSyncError(err?.code || err?.message || String(err))
-      })
-  }, [state, user])
-
   const upsertEntry = useCallback((entry) => {
+    let mergedEntry
     setState((prev) => {
       const idx = prev.entries.findIndex((e) => e.date === entry.date)
       const entries = [...prev.entries]
-      if (idx >= 0) {
-        entries[idx] = { ...entries[idx], ...entry, updatedAt: Date.now() }
-      } else {
-        entries.push({ id: `e-${Date.now()}`, ...entry, updatedAt: Date.now() })
-      }
+      mergedEntry =
+        idx >= 0 ? { ...entries[idx], ...entry, updatedAt: Date.now() } : { id: `e-${Date.now()}`, ...entry, updatedAt: Date.now() }
+      if (idx >= 0) entries[idx] = mergedEntry
+      else entries.push(mergedEntry)
       entries.sort((a, b) => (a.date < b.date ? 1 : -1))
       return { ...prev, entries }
     })
+    if (userRef.current) {
+      writeCloudEntry(userRef.current.uid, mergedEntry).catch((err) => setSyncError(describeError(err)))
+    }
   }, [])
 
   const deleteEntry = useCallback((id) => {
-    setState((prev) => ({ ...prev, entries: prev.entries.filter((e) => e.id !== id) }))
+    let deletedDate
+    setState((prev) => {
+      deletedDate = prev.entries.find((e) => e.id === id)?.date
+      return { ...prev, entries: prev.entries.filter((e) => e.id !== id) }
+    })
+    if (userRef.current && deletedDate) {
+      deleteCloudEntry(userRef.current.uid, deletedDate).catch((err) => setSyncError(describeError(err)))
+    }
   }, [])
 
   const addWeightLog = useCallback((log) => {
+    let mergedLog
     setState((prev) => {
       const idx = prev.weight.logs.findIndex((l) => l.date === log.date)
       const logs = [...prev.weight.logs]
-      if (idx >= 0) {
-        logs[idx] = { ...logs[idx], ...log }
-      } else {
-        logs.push({ id: `w-${Date.now()}`, ...log })
-      }
+      mergedLog = idx >= 0 ? { ...logs[idx], ...log } : { id: `w-${Date.now()}`, ...log }
+      if (idx >= 0) logs[idx] = mergedLog
+      else logs.push(mergedLog)
       logs.sort((a, b) => (a.date > b.date ? 1 : -1))
       return { ...prev, weight: { ...prev.weight, logs } }
     })
+    if (userRef.current) {
+      writeCloudWeightLog(userRef.current.uid, mergedLog).catch((err) => setSyncError(describeError(err)))
+    }
   }, [])
 
   const deleteWeightLog = useCallback((id) => {
-    setState((prev) => ({
-      ...prev,
-      weight: { ...prev.weight, logs: prev.weight.logs.filter((l) => l.id !== id) },
-    }))
+    let deletedDate
+    setState((prev) => {
+      deletedDate = prev.weight.logs.find((l) => l.id === id)?.date
+      return { ...prev, weight: { ...prev.weight, logs: prev.weight.logs.filter((l) => l.id !== id) } }
+    })
+    if (userRef.current && deletedDate) {
+      deleteCloudWeightLog(userRef.current.uid, deletedDate).catch((err) => setSyncError(describeError(err)))
+    }
   }, [])
 
   const updateGoal = useCallback((goal) => {
-    setState((prev) => ({ ...prev, weight: { ...prev.weight, ...goal } }))
+    let mergedGoal
+    setState((prev) => {
+      mergedGoal = { ...prev.weight, ...goal }
+      return { ...prev, weight: mergedGoal }
+    })
+    if (userRef.current) {
+      const { logs: _logs, ...goalOnly } = mergedGoal
+      writeCloudGoal(userRef.current.uid, goalOnly).catch((err) => setSyncError(describeError(err)))
+    }
   }, [])
 
   const resetAll = useCallback(() => {
     setState({ entries: seedEntries, weight: seedWeight })
+    const uid = userRef.current?.uid
+    if (!uid) return
+    ;(async () => {
+      try {
+        const [cloudEntries, cloudLogs] = await Promise.all([fetchEntriesOnce(uid), fetchWeightLogsOnce(uid)])
+        await Promise.all(cloudEntries.map((e) => deleteCloudEntry(uid, e.date)))
+        await Promise.all(cloudLogs.map((l) => deleteCloudWeightLog(uid, l.date)))
+        await Promise.all(seedEntries.map((e) => writeCloudEntry(uid, e)))
+        const { logs, ...goal } = seedWeight
+        await writeCloudGoal(uid, goal)
+        await Promise.all((logs ?? []).map((l) => writeCloudWeightLog(uid, l)))
+      } catch (err) {
+        setSyncError(describeError(err))
+      }
+    })()
   }, [])
 
   const replaceAll = useCallback((data) => {
-    setState({
-      entries: Array.isArray(data.entries) ? data.entries : seedEntries,
-      weight: data.weight && typeof data.weight === 'object' ? data.weight : seedWeight,
-    })
+    const entries = Array.isArray(data.entries) ? data.entries : seedEntries
+    const weight = data.weight && typeof data.weight === 'object' ? data.weight : seedWeight
+    setState({ entries, weight })
+    const uid = userRef.current?.uid
+    if (!uid) return
+    ;(async () => {
+      try {
+        const [cloudEntries, cloudLogs] = await Promise.all([fetchEntriesOnce(uid), fetchWeightLogsOnce(uid)])
+        await Promise.all(cloudEntries.map((e) => deleteCloudEntry(uid, e.date)))
+        await Promise.all(cloudLogs.map((l) => deleteCloudWeightLog(uid, l.date)))
+        await Promise.all(entries.map((e) => writeCloudEntry(uid, e)))
+        const { logs, ...goal } = weight
+        await writeCloudGoal(uid, goal)
+        await Promise.all((logs ?? []).map((l) => writeCloudWeightLog(uid, l)))
+      } catch (err) {
+        setSyncError(describeError(err))
+      }
+    })()
   }, [])
 
   const value = useMemo(
@@ -219,7 +295,7 @@ export function StoreProvider({ children }) {
       user,
       syncStatus,
       syncError,
-      resync: () => user && syncWithCloud(user.uid),
+      resync: () => user && reconcileWithCloud(user.uid),
       sendLoginLink,
       completeLoginWithLink,
       logout: firebaseLogout,
@@ -236,7 +312,7 @@ export function StoreProvider({ children }) {
       user,
       syncStatus,
       syncError,
-      syncWithCloud,
+      reconcileWithCloud,
     ],
   )
 
