@@ -33,8 +33,14 @@ export default function Settings() {
     try {
       await sendLoginLink(email.trim())
       setLinkSent(true)
-    } catch {
-      setLoginError("Impossible d'envoyer le lien. Vérifie l'adresse email.")
+    } catch (err) {
+      if (err?.code === 'auth/too-many-requests') {
+        setLoginError('Trop de demandes de lien récentes pour cet email. Attends quelques minutes avant de réessayer.')
+      } else if (err?.code === 'auth/invalid-email') {
+        setLoginError('Adresse email invalide.')
+      } else {
+        setLoginError(`Impossible d'envoyer le lien (${err?.code || err?.message || 'erreur inconnue'}).`)
+      }
     }
   }
 
