@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { StoreProvider } from './lib/store'
+import ErrorBoundary from './components/ErrorBoundary'
 import BottomNav from './components/BottomNav'
 import Dashboard from './pages/Dashboard'
 import Journal from './pages/Journal'
@@ -18,11 +19,13 @@ export default function App() {
   const Page = PAGES[tab]
 
   return (
-    <StoreProvider>
-      <div className="safe-top mx-auto min-h-screen max-w-md pb-24">
-        <Page onNavigate={setTab} />
-      </div>
-      <BottomNav active={tab} onChange={setTab} />
-    </StoreProvider>
+    <ErrorBoundary>
+      <StoreProvider>
+        <div className="safe-top mx-auto min-h-screen max-w-md pb-24">
+          <Page onNavigate={setTab} />
+        </div>
+        <BottomNav active={tab} onChange={setTab} />
+      </StoreProvider>
+    </ErrorBoundary>
   )
 }

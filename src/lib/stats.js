@@ -1,3 +1,5 @@
+import { SESSION_TYPES } from '../data/seed'
+
 export function average(nums) {
   const clean = nums.filter((n) => typeof n === 'number' && !Number.isNaN(n))
   if (!clean.length) return 0
@@ -22,6 +24,28 @@ export function currentStreak(entries, predicate) {
     else break
   }
   return streak
+}
+
+export function bestStreak(entries, predicate) {
+  const sorted = [...entries].sort((a, b) => (a.date < b.date ? 1 : -1))
+  let best = 0
+  let current = 0
+  for (const e of sorted) {
+    if (predicate(e)) {
+      current += 1
+      best = Math.max(best, current)
+    } else {
+      current = 0
+    }
+  }
+  return best
+}
+
+export function sessionCounts(entries) {
+  return SESSION_TYPES.map((type) => ({
+    type,
+    count: entries.filter((e) => e.session === type).length,
+  }))
 }
 
 export function latestWeight(weight) {

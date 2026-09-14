@@ -1,4 +1,4 @@
-import { ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceDot, CartesianGrid } from 'recharts'
+import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, CartesianGrid } from 'recharts'
 import { parseISO, formatShort } from '../lib/format'
 
 export default function WeightChart({ weight }) {
@@ -19,7 +19,7 @@ export default function WeightChart({ weight }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={points} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
-          <CartesianGrid stroke="currentColor" className="text-slate-100 dark:text-slate-800" vertical={false} />
+          <CartesianGrid stroke="currentColor" className="text-slate-100 dark:text-neutral-800" vertical={false} />
           <XAxis
             dataKey="t"
             type="number"
@@ -31,25 +31,20 @@ export default function WeightChart({ weight }) {
             minTickGap={40}
           />
           <YAxis domain={[min, max]} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} width={30} tickMargin={4} />
-          <Tooltip
-            labelFormatter={(t) => formatShort(new Date(t).toISOString().slice(0, 10))}
-            formatter={(v, name) => [`${v} kg`, name === 'actual' ? 'Poids' : 'Objectif']}
-            contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', fontSize: 13 }}
-          />
-          <Line type="monotone" dataKey="target" stroke="#c7d2fe" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+          <Line type="monotone" dataKey="target" stroke="#a8a29e" strokeWidth={2} strokeDasharray="5 5" dot={false} />
           <Line
             type="monotone"
             dataKey="actual"
             stroke="url(#weightGradient)"
             strokeWidth={3}
-            dot={{ r: 3.5, fill: '#6366f1', strokeWidth: 0 }}
+            dot={{ r: 3.5, fill: '#dc2626', strokeWidth: 0 }}
             activeDot={{ r: 5 }}
           />
           <ReferenceDot x={end} y={goalWeight} r={5} fill="#10b981" stroke="white" strokeWidth={2} />
           <defs>
             <linearGradient id="weightGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#6366f1" />
+              <stop offset="0%" stopColor="#f97316" />
+              <stop offset="100%" stopColor="#dc2626" />
             </linearGradient>
           </defs>
         </ComposedChart>

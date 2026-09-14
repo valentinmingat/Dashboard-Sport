@@ -4,12 +4,12 @@ const COLORS = { Bon: '#10b981', Neutre: '#f59e0b', Mauvais: '#f43f5e' }
 
 export default function ResultDonut({ counts }) {
   const total = counts.Bon + counts.Neutre + counts.Mauvais
-  const data = ['Bon', 'Neutre', 'Mauvais'].map((k) => ({ name: k, value: counts[k] }))
+  const data = ['Bon', 'Neutre', 'Mauvais'].map((k) => ({ name: k, value: counts[k] })).filter((d) => d.value > 0)
   const hasData = total > 0
 
   return (
     <div className="relative flex items-center gap-4">
-      <div className="h-28 w-28 shrink-0">
+      <div className="relative h-28 w-28 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -28,7 +28,7 @@ export default function ResultDonut({ counts }) {
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none -mt-[58%] flex h-[58%] flex-col items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xl font-bold text-slate-800 dark:text-slate-100">{total}</span>
           <span className="text-[10px] font-medium text-slate-400">jours</span>
         </div>

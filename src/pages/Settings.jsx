@@ -1,12 +1,92 @@
 import { useState } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2, RefreshCw, AlertTriangle } from 'lucide-react'
 import { useStore } from '../lib/store'
+import { todayISO } from '../lib/format'
 
 export default function Settings() {
-  const { weight, updateGoal, resetAll } = useStore()
+  const {
+    entries,
+    weight,
+    updateGoal,
+    resetAll,
+    replaceAll,
+    cloudEnabled,
+    user,
+    syncStatus,
+    syncError,
+    resync,
+    sendLoginLink,
+    completeLoginWithLink,
+    logout,
+  } = useStore()
   const [form, setForm] = useState(weight)
   const set = (patch) => setForm((f) => ({ ...f, ...patch }))
   const [saved, setSaved] = useState(false)
+  const [email, setEmail] = useState('')
+  const [linkSent, setLinkSent] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const [pastedLink, setPastedLink] = useState('')
+  const [pasteError, setPasteError] = useState('')
+
+  const handleSendLink = async () => {
+    setLoginError('')
+    try {
+      await sendLoginLink(email.trim())
+      setLinkSent(true)
+    } catch (err) {
+      if (err?.code === 'auth/too-many-requests') {
+        setLoginError('Trop de demandes de lien récentes pour cet email. Attends quelques minutes avant de réessayer.')
+      } else if (err?.code === 'auth/invalid-email') {
+        setLoginError('Adresse email invalide.')
+      } else {
+        setLoginError(`Impossible d'envoyer le lien (${err?.code || err?.message || 'erreur inconnue'}).`)
+      }
+    }
+  }
+
+  const handleCompleteWithLink = async () => {
+    setPasteError('')
+    try {
+      await completeLoginWithLink(email.trim(), pastedLink.trim())
+      setPastedLink('')
+    } catch (err) {
+      if (err?.code === 'auth/invalid-action-code' || err?.code === 'auth/expired-action-code') {
+        setPasteError('Ce lien a déjà été utilisé ou a expiré. Demande un nouveau lien ci-dessus puis colle-le ici.')
+      } else {
+        setPasteError('Lien invalide. Vérifie que tu as bien copié le lien complet, puis réessaie.')
+      }
+    }
+  }
+
+  const handleExport = () => {
+    const data = { entries, weight, exportedAt: new Date().toISOString() }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `sport-track-sauvegarde-${todayISO()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImport = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result)
+        if (!Array.isArray(data.entries) || typeof data.weight !== 'object') throw new Error('invalid')
+        if (confirm('Remplacer toutes les données actuelles par cette sauvegarde ?')) {
+          replaceAll(data)
+        }
+      } catch {
+        alert('Fichier de sauvegarde invalide.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-4">
@@ -14,7 +94,7 @@ export default function Settings() {
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Réglages</h1>
       </header>
 
-      <section className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Objectif de poids</h2>
 
         <Row label="Date de départ">
@@ -49,13 +129,148 @@ export default function Settings() {
             setSaved(true)
             setTimeout(() => setSaved(false), 1500)
           }}
-          className="mt-1 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98]"
+          className="mt-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
         >
           {saved ? 'Enregistré ✓' : 'Enregistrer'}
         </button>
       </section>
 
-      <section className="rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      {cloudEnabled && (
+        <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+            {user && syncStatus === 'error' ? (
+              <AlertTriangle size={16} className="text-rose-500" />
+            ) : user ? (
+              <Cloud size={16} className="text-emerald-500" />
+            ) : (
+              <CloudOff size={16} className="text-slate-400" />
+            )}
+            Synchronisation
+          </h2>
+          {user ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Connecté avec <span className="font-semibold">{user.email}</span>
+                <br />
+                <span
+                  className={`text-xs ${syncStatus === 'error' ? 'font-medium text-rose-500' : 'text-slate-400'}`}
+                >
+                  {syncStatus === 'syncing' && 'Synchronisation en cours…'}
+                  {syncStatus === 'synced' && 'Sauvegarde automatique activée ✓'}
+                  {syncStatus === 'error' && `Échec de la synchronisation (${syncError || 'erreur inconnue'})`}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={resync}
+                disabled={syncStatus === 'syncing'}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
+              >
+                <RefreshCw size={15} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
+                Resynchroniser maintenant
+              </button>
+              <button
+                type="button"
+                onClick={logout}
+                className="w-full rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-neutral-700 dark:text-slate-200"
+              >
+                Se déconnecter
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Connecte-toi pour sauvegarder automatiquement tes données en ligne — nécessaire à chaque nouvelle
+                installation de l'app (réinstallation, nouvel appareil, Safari) puisque chaque installation a son propre
+                espace de stockage sur iPhone.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  1. Recevoir le lien
+                </p>
+                <input
+                  type="email"
+                  inputMode="email"
+                  placeholder="ton@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input"
+                />
+                {loginError && <p className="text-xs font-medium text-rose-500">{loginError}</p>}
+                <button
+                  type="button"
+                  onClick={handleSendLink}
+                  disabled={!email.includes('@')}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
+                >
+                  <Mail size={15} />
+                  Recevoir un lien de connexion
+                </button>
+                {linkSent && (
+                  <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    Lien envoyé à {email}.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 dark:border-neutral-700">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                  2. Valider le lien ici (pas dans l'email)
+                </p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">
+                  Dans l'email reçu, <span className="font-semibold text-slate-500 dark:text-slate-400">appuie longuement</span>{' '}
+                  sur le lien et choisis <span className="font-semibold text-slate-500 dark:text-slate-400">"Copier le lien"</span> —
+                  n'appuie pas dessus normalement, ça ouvrirait Safari au lieu de cette app. Reviens ici et colle-le :
+                </p>
+                <input
+                  type="text"
+                  placeholder="Colle le lien reçu par email"
+                  value={pastedLink}
+                  onChange={(e) => setPastedLink(e.target.value)}
+                  className="input"
+                />
+                {pasteError && <p className="text-xs font-medium text-rose-500">{pasteError}</p>}
+                <button
+                  type="button"
+                  onClick={handleCompleteWithLink}
+                  disabled={!email.includes('@') || !pastedLink}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-semibold text-white active:scale-[0.98] disabled:opacity-40 dark:bg-neutral-600"
+                >
+                  <Link2 size={15} />
+                  Se connecter avec ce lien
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Sauvegarde</h2>
+        <div className="flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-neutral-700 dark:text-slate-200"
+          >
+            <Download size={15} />
+            Exporter mes données
+          </button>
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-neutral-700 dark:text-slate-200">
+            <Upload size={15} />
+            Importer une sauvegarde
+            <input type="file" accept="application/json" onChange={handleImport} className="hidden" />
+          </label>
+        </div>
+        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+          {user
+            ? 'Sauvegarde locale complémentaire, en plus de la synchronisation en ligne ci-dessus.'
+            : "Tes données ne sont stockées que sur cet appareil. Exporte une sauvegarde de temps en temps, et surtout avant de réinstaller l'app sur ton écran d'accueil."}
+        </p>
+      </section>
+
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Données</h2>
         <button
           type="button"
@@ -70,7 +285,7 @@ export default function Settings() {
       </section>
 
       <p className="px-1 text-center text-xs text-slate-300 dark:text-slate-600">
-        Sport Track · données stockées localement sur cet appareil
+        Sport Track · {user ? 'données synchronisées en ligne' : 'données stockées localement sur cet appareil'}
       </p>
     </div>
   )
@@ -78,8 +293,8 @@ export default function Settings() {
 
 function Row({ label, children }) {
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</span>
+    <label className="flex flex-col gap-2">
+      <span className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</span>
       {children}
     </label>
   )
