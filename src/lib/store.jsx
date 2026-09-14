@@ -41,6 +41,10 @@ function describeError(err) {
   return err?.code || err?.message || String(err)
 }
 
+function hasValidDate(item) {
+  return typeof item?.date === 'string' && item.date.length > 0
+}
+
 const StoreContext = createContext(null)
 
 export function StoreProvider({ children }) {
@@ -87,23 +91,25 @@ export function StoreProvider({ children }) {
       if (cloudEntries.length === 0 && cloudLogs.length === 0 && !cloudGoal) {
         const legacy = await fetchLegacyDoc(uid)
         if (legacy && Array.isArray(legacy.entries) && legacy.entries.length > 0) {
-          await Promise.all(legacy.entries.map((e) => writeCloudEntry(uid, e)))
-          cloudEntries = legacy.entries
+          const validLegacyEntries = legacy.entries.filter(hasValidDate)
+          await Promise.all(validLegacyEntries.map((e) => writeCloudEntry(uid, e)))
+          cloudEntries = validLegacyEntries
         }
         if (legacy?.weight) {
           const { logs, ...goal } = legacy.weight
           await writeCloudGoal(uid, goal)
           cloudGoal = goal
           if (Array.isArray(logs) && logs.length > 0) {
-            await Promise.all(logs.map((l) => writeCloudWeightLog(uid, l)))
-            cloudLogs = logs
+            const validLegacyLogs = logs.filter(hasValidDate)
+            await Promise.all(validLegacyLogs.map((l) => writeCloudWeightLog(uid, l)))
+            cloudLogs = validLegacyLogs
           }
         }
       }
 
       const cloudEntryMap = new Map(cloudEntries.map((e) => [e.date, e]))
       await Promise.all(
-        stateRef.current.entries.map((local) => {
+        stateRef.current.entries.filter(hasValidDate).map((local) => {
           const cloud = cloudEntryMap.get(local.date)
           if (!cloud) return writeCloudEntry(uid, local)
           const localTime = local.updatedAt ?? 0
@@ -121,6 +127,7 @@ export function StoreProvider({ children }) {
       const cloudLogMap = new Map(cloudLogs.map((l) => [l.date, l]))
       await Promise.all(
         (stateRef.current.weight.logs ?? [])
+          .filter(hasValidDate)
           .filter((l) => !cloudLogMap.has(l.date))
           .map((l) => writeCloudWeightLog(uid, l)),
       )
@@ -256,45 +263,44 @@ export function StoreProvider({ children }) {
     }
   }, [])
 
+  // Write the new set to the cloud before deleting what's no longer wanted,
+  // so a failure partway through never leaves the cloud briefly empty — the
+  // live subscriptions would otherwise sync that emptiness straight back.
+  const replaceCloudWith = useCallback(async (uid, entries, weight) => {
+    const validEntries = entries.filter(hasValidDate)
+    const validLogs = (weight.logs ?? []).filter(hasValidDate)
+    const keepEntryDates = new Set(validEntries.map((e) => e.date))
+    const keepLogDates = new Set(validLogs.map((l) => l.date))
+
+    const [cloudEntries, cloudLogs] = await Promise.all([fetchEntriesOnce(uid), fetchWeightLogsOnce(uid)])
+
+    await Promise.all(validEntries.map((e) => writeCloudEntry(uid, e)))
+    const { logs: _logs, ...goal } = weight
+    await writeCloudGoal(uid, goal)
+    await Promise.all(validLogs.map((l) => writeCloudWeightLog(uid, l)))
+
+    await Promise.all(cloudEntries.filter((e) => !keepEntryDates.has(e.date)).map((e) => deleteCloudEntry(uid, e.date)))
+    await Promise.all(cloudLogs.filter((l) => !keepLogDates.has(l.date)).map((l) => deleteCloudWeightLog(uid, l.date)))
+  }, [])
+
   const resetAll = useCallback(() => {
     setState({ entries: seedEntries, weight: seedWeight })
     const uid = userRef.current?.uid
     if (!uid) return
-    ;(async () => {
-      try {
-        const [cloudEntries, cloudLogs] = await Promise.all([fetchEntriesOnce(uid), fetchWeightLogsOnce(uid)])
-        await Promise.all(cloudEntries.map((e) => deleteCloudEntry(uid, e.date)))
-        await Promise.all(cloudLogs.map((l) => deleteCloudWeightLog(uid, l.date)))
-        await Promise.all(seedEntries.map((e) => writeCloudEntry(uid, e)))
-        const { logs, ...goal } = seedWeight
-        await writeCloudGoal(uid, goal)
-        await Promise.all((logs ?? []).map((l) => writeCloudWeightLog(uid, l)))
-      } catch (err) {
-        setSyncError(describeError(err))
-      }
-    })()
-  }, [])
+    replaceCloudWith(uid, seedEntries, seedWeight).catch((err) => setSyncError(describeError(err)))
+  }, [replaceCloudWith])
 
-  const replaceAll = useCallback((data) => {
-    const entries = Array.isArray(data.entries) ? data.entries : seedEntries
-    const weight = data.weight && typeof data.weight === 'object' ? data.weight : seedWeight
-    setState({ entries, weight })
-    const uid = userRef.current?.uid
-    if (!uid) return
-    ;(async () => {
-      try {
-        const [cloudEntries, cloudLogs] = await Promise.all([fetchEntriesOnce(uid), fetchWeightLogsOnce(uid)])
-        await Promise.all(cloudEntries.map((e) => deleteCloudEntry(uid, e.date)))
-        await Promise.all(cloudLogs.map((l) => deleteCloudWeightLog(uid, l.date)))
-        await Promise.all(entries.map((e) => writeCloudEntry(uid, e)))
-        const { logs, ...goal } = weight
-        await writeCloudGoal(uid, goal)
-        await Promise.all((logs ?? []).map((l) => writeCloudWeightLog(uid, l)))
-      } catch (err) {
-        setSyncError(describeError(err))
-      }
-    })()
-  }, [])
+  const replaceAll = useCallback(
+    (data) => {
+      const entries = Array.isArray(data.entries) ? data.entries : seedEntries
+      const weight = data.weight && typeof data.weight === 'object' ? data.weight : seedWeight
+      setState({ entries, weight })
+      const uid = userRef.current?.uid
+      if (!uid) return
+      replaceCloudWith(uid, entries, weight).catch((err) => setSyncError(describeError(err)))
+    },
+    [replaceCloudWith],
+  )
 
   const value = useMemo(
     () => ({
