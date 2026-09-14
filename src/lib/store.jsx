@@ -86,24 +86,26 @@ export function StoreProvider({ children }) {
       let cloudLogs = await fetchWeightLogsOnce(uid)
 
       // One-off migration from the old single-document { entries, weight }
-      // format, if this account still has data there and nothing yet in
-      // the new collections.
-      if (cloudEntries.length === 0 && cloudLogs.length === 0 && !cloudGoal) {
+      // format, if this account still has data there. Each of the three new
+      // stores is backfilled independently — one already having a document
+      // (e.g. from an earlier interrupted attempt) must never block
+      // migrating the other two, or they'd stay empty forever.
+      if (cloudEntries.length === 0 || !cloudGoal || cloudLogs.length === 0) {
         const legacy = await fetchLegacyDoc(uid)
-        if (legacy && Array.isArray(legacy.entries) && legacy.entries.length > 0) {
+        if (cloudEntries.length === 0 && legacy && Array.isArray(legacy.entries) && legacy.entries.length > 0) {
           const validLegacyEntries = legacy.entries.filter(hasValidDate)
           await Promise.all(validLegacyEntries.map((e) => writeCloudEntry(uid, e)))
           cloudEntries = validLegacyEntries
         }
-        if (legacy?.weight) {
-          const { logs, ...goal } = legacy.weight
+        if (!cloudGoal && legacy?.weight) {
+          const { logs: _legacyLogs, ...goal } = legacy.weight
           await writeCloudGoal(uid, goal)
           cloudGoal = goal
-          if (Array.isArray(logs) && logs.length > 0) {
-            const validLegacyLogs = logs.filter(hasValidDate)
-            await Promise.all(validLegacyLogs.map((l) => writeCloudWeightLog(uid, l)))
-            cloudLogs = validLegacyLogs
-          }
+        }
+        if (cloudLogs.length === 0 && Array.isArray(legacy?.weight?.logs) && legacy.weight.logs.length > 0) {
+          const validLegacyLogs = legacy.weight.logs.filter(hasValidDate)
+          await Promise.all(validLegacyLogs.map((l) => writeCloudWeightLog(uid, l)))
+          cloudLogs = validLegacyLogs
         }
       }
 
