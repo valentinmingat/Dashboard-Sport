@@ -30,7 +30,7 @@ export default function Journal() {
         <button
           type="button"
           onClick={() => setTarget('new')}
-          className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-500 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 active:scale-95"
+          className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-orange-500 to-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-red-600/25 active:scale-95"
         >
           <Plus size={16} strokeWidth={2.5} />
           Ajouter

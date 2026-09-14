@@ -16,7 +16,7 @@ export default class ErrorBoundary extends Component {
     if (!this.state.error) return this.props.children
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center dark:bg-slate-950">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center dark:bg-neutral-950">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-500 dark:bg-rose-500/10">
           <AlertTriangle size={26} />
         </div>
@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98]"
+          className="flex items-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
         >
           <RotateCcw size={15} />
           Recharger l'application

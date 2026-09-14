@@ -11,7 +11,7 @@ export default function EntryCard({ entry, onEdit, onDelete }) {
   const supplements = [entry.gainer && 'Gainer/Whey', entry.creatine && 'Créatine', entry.collagen && 'Collagène'].filter(Boolean)
 
   return (
-    <div className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+    <div className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
       <div className="flex items-start justify-between gap-2">
         <button type="button" onClick={onEdit} className="flex-1 text-left">
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{formatDay(entry.date)}</p>

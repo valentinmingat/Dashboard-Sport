@@ -9,7 +9,7 @@ const TABS = [
 
 export default function BottomNav({ active, onChange }) {
   return (
-    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-slate-200/80 bg-white/85 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-900/85">
+    <nav className="safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-slate-200/80 bg-white/85 backdrop-blur-lg dark:border-neutral-800 dark:bg-neutral-900/85">
       <div className="mx-auto flex max-w-md items-stretch justify-around px-2 pb-1 pt-1.5">
         {TABS.map((tab) => {
           const isActive = active === tab.id
@@ -24,11 +24,11 @@ export default function BottomNav({ active, onChange }) {
               <Icon
                 size={22}
                 strokeWidth={isActive ? 2.4 : 2}
-                className={isActive ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500'}
+                className={isActive ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'}
               />
               <span
                 className={`text-[11px] font-medium ${
-                  isActive ? 'text-indigo-500' : 'text-slate-400 dark:text-slate-500'
+                  isActive ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
                 {tab.label}
