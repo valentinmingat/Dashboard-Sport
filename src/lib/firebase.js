@@ -98,17 +98,17 @@ export function subscribeEntries(uid, callback, onError) {
 // for the same union-friendly reason as entries. ---
 
 export async function fetchGoalOnce(uid) {
-  const snap = await getDoc(doc(db, 'users', uid, 'weight'))
+  const snap = await getDoc(doc(db, 'users', uid, 'weight', 'goal'))
   return snap.exists() ? snap.data() : null
 }
 
 export async function writeCloudGoal(uid, goal) {
-  await setDoc(doc(db, 'users', uid, 'weight'), goal)
+  await setDoc(doc(db, 'users', uid, 'weight', 'goal'), goal)
 }
 
 export function subscribeGoal(uid, callback, onError) {
   return onSnapshot(
-    doc(db, 'users', uid, 'weight'),
+    doc(db, 'users', uid, 'weight', 'goal'),
     (snap) => {
       if (!snap.exists()) return
       callback(snap.data(), snap.metadata.hasPendingWrites)
