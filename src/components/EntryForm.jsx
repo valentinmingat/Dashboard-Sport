@@ -98,7 +98,7 @@ export default function EntryForm({ date, initial, dateEditable = false, existin
           onChange={(e) => set({ notes: e.target.value })}
           rows={3}
           placeholder="Une remarque sur la journée…"
-          className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 placeholder:text-slate-300 focus:border-indigo-400 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 placeholder:text-slate-300 focus:border-orange-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-200"
         />
       </Field>
 
@@ -106,14 +106,14 @@ export default function EntryForm({ date, initial, dateEditable = false, existin
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 active:scale-[0.98] dark:bg-slate-800 dark:text-slate-300"
+          className="flex-1 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 active:scale-[0.98] dark:bg-neutral-800 dark:text-slate-300"
         >
           Annuler
         </button>
         <button
           type="submit"
           disabled={dateTaken}
-          className="flex-1 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
+          className="flex-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
         >
           Enregistrer
         </button>

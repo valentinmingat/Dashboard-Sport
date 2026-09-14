@@ -94,7 +94,7 @@ export default function Settings() {
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Réglages</h1>
       </header>
 
-      <section className="animate-pop flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Objectif de poids</h2>
 
         <Row label="Date de départ">
@@ -129,14 +129,14 @@ export default function Settings() {
             setSaved(true)
             setTimeout(() => setSaved(false), 1500)
           }}
-          className="mt-1 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98]"
+          className="mt-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
         >
           {saved ? 'Enregistré ✓' : 'Enregistrer'}
         </button>
       </section>
 
       {cloudEnabled && (
-        <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+        <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
             {user && syncStatus === 'error' ? (
               <AlertTriangle size={16} className="text-rose-500" />
@@ -164,7 +164,7 @@ export default function Settings() {
                 type="button"
                 onClick={resync}
                 disabled={syncStatus === 'syncing'}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
               >
                 <RefreshCw size={15} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
                 Resynchroniser maintenant
@@ -172,7 +172,7 @@ export default function Settings() {
               <button
                 type="button"
                 onClick={logout}
-                className="w-full rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-slate-700 dark:text-slate-200"
+                className="w-full rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-neutral-700 dark:text-slate-200"
               >
                 Se déconnecter
               </button>
@@ -202,7 +202,7 @@ export default function Settings() {
                   type="button"
                   onClick={handleSendLink}
                   disabled={!email.includes('@')}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98] disabled:opacity-40"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
                 >
                   <Mail size={15} />
                   Recevoir un lien de connexion
@@ -214,7 +214,7 @@ export default function Settings() {
                 )}
               </div>
 
-              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
+              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 dark:border-neutral-700">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                   2. Valider le lien ici (pas dans l'email)
                 </p>
@@ -235,7 +235,7 @@ export default function Settings() {
                   type="button"
                   onClick={handleCompleteWithLink}
                   disabled={!email.includes('@') || !pastedLink}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-semibold text-white active:scale-[0.98] disabled:opacity-40 dark:bg-slate-600"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-semibold text-white active:scale-[0.98] disabled:opacity-40 dark:bg-neutral-600"
                 >
                   <Link2 size={15} />
                   Se connecter avec ce lien
@@ -246,18 +246,18 @@ export default function Settings() {
         </section>
       )}
 
-      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Sauvegarde</h2>
         <div className="flex flex-col gap-2.5">
           <button
             type="button"
             onClick={handleExport}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-slate-700 dark:text-slate-200"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-neutral-700 dark:text-slate-200"
           >
             <Download size={15} />
             Exporter mes données
           </button>
-          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-slate-700 dark:text-slate-200">
+          <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-700 active:scale-[0.98] dark:bg-neutral-700 dark:text-slate-200">
             <Upload size={15} />
             Importer une sauvegarde
             <input type="file" accept="application/json" onChange={handleImport} className="hidden" />
@@ -270,7 +270,7 @@ export default function Settings() {
         </p>
       </section>
 
-      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Données</h2>
         <button
           type="button"

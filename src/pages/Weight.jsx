@@ -27,14 +27,14 @@ export default function Weight() {
             setDraft({ date: todayISO(), value: current })
             setOpen(true)
           }}
-          className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-cyan-500 to-indigo-500 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 active:scale-95"
+          className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-orange-500 to-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-red-600/25 active:scale-95"
         >
           <Plus size={16} strokeWidth={2.5} />
           Peser
         </button>
       </header>
 
-      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
             <Flag size={14} /> Départ {weight.startWeight} {weight.unit}
@@ -43,9 +43,9 @@ export default function Weight() {
             <Target size={14} /> Objectif {weight.goalWeight} {weight.unit}
           </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-700">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-orange-500 to-emerald-500 transition-all"
             style={{ width: `${Math.round(progress * 100)}%` }}
           />
         </div>
@@ -56,7 +56,7 @@ export default function Weight() {
         </p>
       </section>
 
-      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <WeightChart weight={weight} />
       </section>
 
@@ -65,7 +65,7 @@ export default function Weight() {
         {sortedLogs.map((log) => (
           <div
             key={log.id}
-            className="animate-pop flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none"
+            className="animate-pop flex items-center justify-between rounded-2xl bg-white p-3.5 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none"
           >
             <span className="text-sm text-slate-500 dark:text-slate-400">{formatShort(log.date)}</span>
             <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export default function Weight() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex-1 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 active:scale-[0.98] dark:bg-slate-800 dark:text-slate-300"
+              className="flex-1 rounded-2xl bg-slate-100 py-3 text-sm font-semibold text-slate-600 active:scale-[0.98] dark:bg-neutral-800 dark:text-slate-300"
             >
               Annuler
             </button>
@@ -114,7 +114,7 @@ export default function Weight() {
                 addWeightLog({ date: draft.date, weight: draft.value })
                 setOpen(false)
               }}
-              className="flex-1 rounded-2xl bg-gradient-to-br from-cyan-500 to-indigo-500 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/30 active:scale-[0.98]"
+              className="flex-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
             >
               Enregistrer
             </button>

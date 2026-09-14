@@ -1,6 +1,6 @@
-export default function StatCard({ label, value, unit, icon: Icon, accent = 'from-cyan-500 to-indigo-500' }) {
+export default function StatCard({ label, value, unit, icon: Icon, accent = 'from-orange-500 to-red-600' }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-slate-800 dark:shadow-none">
+    <div className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
       {Icon && (
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-white`}>
           <Icon size={19} strokeWidth={2.25} />

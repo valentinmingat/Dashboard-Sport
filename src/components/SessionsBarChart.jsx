@@ -11,7 +11,7 @@ export default function SessionsBarChart({ counts }) {
             <span>{type}</span>
             <span className="shrink-0 font-semibold text-slate-700 dark:text-slate-200">{count}</span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-700">
             <div
               className="h-full rounded-full transition-all"
               style={{ width: `${(count / max) * 100}%`, backgroundColor: SESSION_COLORS[i] }}
