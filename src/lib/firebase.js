@@ -86,13 +86,12 @@ export async function deleteCloudEntry(uid, date) {
   await deleteDoc(doc(db, 'users', uid, 'entries', date))
 }
 
-export function subscribeEntries(uid, callback) {
-  return onSnapshot(collection(db, 'users', uid, 'entries'), (snap) => {
-    callback(
-      snap.docs.map((d) => d.data()),
-      snap.metadata.hasPendingWrites,
-    )
-  })
+export function subscribeEntries(uid, callback, onError) {
+  return onSnapshot(
+    collection(db, 'users', uid, 'entries'),
+    (snap) => callback(snap.docs.map((d) => d.data()), snap.metadata.hasPendingWrites),
+    onError,
+  )
 }
 
 // --- Weight: goal settings as a single small doc, logs as one doc per date
@@ -107,11 +106,15 @@ export async function writeCloudGoal(uid, goal) {
   await setDoc(doc(db, 'users', uid, 'weight'), goal)
 }
 
-export function subscribeGoal(uid, callback) {
-  return onSnapshot(doc(db, 'users', uid, 'weight'), (snap) => {
-    if (!snap.exists()) return
-    callback(snap.data(), snap.metadata.hasPendingWrites)
-  })
+export function subscribeGoal(uid, callback, onError) {
+  return onSnapshot(
+    doc(db, 'users', uid, 'weight'),
+    (snap) => {
+      if (!snap.exists()) return
+      callback(snap.data(), snap.metadata.hasPendingWrites)
+    },
+    onError,
+  )
 }
 
 export async function fetchWeightLogsOnce(uid) {
@@ -127,13 +130,12 @@ export async function deleteCloudWeightLog(uid, date) {
   await deleteDoc(doc(db, 'users', uid, 'weightLogs', date))
 }
 
-export function subscribeWeightLogs(uid, callback) {
-  return onSnapshot(collection(db, 'users', uid, 'weightLogs'), (snap) => {
-    callback(
-      snap.docs.map((d) => d.data()),
-      snap.metadata.hasPendingWrites,
-    )
-  })
+export function subscribeWeightLogs(uid, callback, onError) {
+  return onSnapshot(
+    collection(db, 'users', uid, 'weightLogs'),
+    (snap) => callback(snap.docs.map((d) => d.data()), snap.metadata.hasPendingWrites),
+    onError,
+  )
 }
 
 // --- One-off migration from the old single-document format

@@ -151,21 +151,37 @@ export function StoreProvider({ children }) {
   // truth, naturally unioning whatever any device has written.
   useEffect(() => {
     if (!user) return
-    const unsubEntries = subscribeEntries(user.uid, (entries, isLocalWrite) => {
-      if (isLocalWrite) return
-      setState((prev) => ({ ...prev, entries: [...entries].sort((a, b) => (a.date < b.date ? 1 : -1)) }))
-    })
-    const unsubGoal = subscribeGoal(user.uid, (goal, isLocalWrite) => {
-      if (isLocalWrite) return
-      setState((prev) => ({ ...prev, weight: { ...prev.weight, ...goal } }))
-    })
-    const unsubLogs = subscribeWeightLogs(user.uid, (logs, isLocalWrite) => {
-      if (isLocalWrite) return
-      setState((prev) => ({
-        ...prev,
-        weight: { ...prev.weight, logs: [...logs].sort((a, b) => (a.date > b.date ? 1 : -1)) },
-      }))
-    })
+    const onSubscriptionError = (err) => {
+      setSyncStatus('error')
+      setSyncError(describeError(err))
+    }
+    const unsubEntries = subscribeEntries(
+      user.uid,
+      (entries, isLocalWrite) => {
+        if (isLocalWrite) return
+        setState((prev) => ({ ...prev, entries: [...entries].sort((a, b) => (a.date < b.date ? 1 : -1)) }))
+      },
+      onSubscriptionError,
+    )
+    const unsubGoal = subscribeGoal(
+      user.uid,
+      (goal, isLocalWrite) => {
+        if (isLocalWrite) return
+        setState((prev) => ({ ...prev, weight: { ...prev.weight, ...goal } }))
+      },
+      onSubscriptionError,
+    )
+    const unsubLogs = subscribeWeightLogs(
+      user.uid,
+      (logs, isLocalWrite) => {
+        if (isLocalWrite) return
+        setState((prev) => ({
+          ...prev,
+          weight: { ...prev.weight, logs: [...logs].sort((a, b) => (a.date > b.date ? 1 : -1)) },
+        }))
+      },
+      onSubscriptionError,
+    )
     return () => {
       unsubEntries()
       unsubGoal()
