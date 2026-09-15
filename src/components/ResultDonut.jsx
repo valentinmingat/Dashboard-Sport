@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 
-const COLORS = { Bon: '#10b981', Neutre: '#f59e0b', Mauvais: '#f43f5e' }
+const COLORS = { Bon: '#10b981', Neutre: '#f97316', Mauvais: '#dc2626' }
 
 export default function ResultDonut({ counts }) {
   const total = counts.Bon + counts.Neutre + counts.Mauvais
