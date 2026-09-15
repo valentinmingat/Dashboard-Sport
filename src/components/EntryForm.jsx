@@ -8,8 +8,8 @@ import { formatLong, todayISO } from '../lib/format'
 
 const RESULT_COLORS = {
   Bon: 'bg-emerald-500 text-white',
-  Neutre: 'bg-amber-500 text-white',
-  Mauvais: 'bg-rose-500 text-white',
+  Neutre: 'bg-orange-500 text-white',
+  Mauvais: 'bg-red-600 text-white',
 }
 
 const EMPTY = {
