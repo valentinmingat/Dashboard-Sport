@@ -22,7 +22,7 @@ export default function SessionsBarChart({ counts }) {
             <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-700">
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${(count / max) * 100}%`, background: `linear-gradient(to right, ${from}, ${to})` }}
+                style={{ width: `${(count / max) * 100}%`, background: `linear-gradient(to right, ${to}, ${from})` }}
               />
             </div>
           </div>
