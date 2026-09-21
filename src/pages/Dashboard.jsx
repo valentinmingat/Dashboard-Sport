@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Utensils, Moon, Flame, Percent, ChevronRight } from 'lucide-react'
+import { Utensils, Moon, Flame, Percent, Trophy, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { average, resultCounts, currentStreak, stretchingRate, sessionCounts } from '../lib/stats'
+import { average, resultCounts, currentStreak, bestStreak, stretchingRate, sessionCounts } from '../lib/stats'
 import { formatLong, todayISO } from '../lib/format'
 import StatCard from '../components/StatCard'
 import ResultDonut from '../components/ResultDonut'
-import SessionsBarChart from '../components/SessionsBarChart'
+import SessionsRadarChart from '../components/SessionsRadarChart'
 import Sheet from '../components/Sheet'
 import EntryForm from '../components/EntryForm'
 
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const avgSleep = average(entries.map((e) => e.sleep))
   const counts = resultCounts(entries)
   const streak = currentStreak(entries, (e) => e.stretching)
+  const bestStretchingStreak = bestStreak(entries, (e) => e.stretching)
   const stretchRate = stretchingRate(entries)
   const sessions = sessionCounts(entries)
 
@@ -59,9 +60,15 @@ export default function Dashboard() {
           accent="from-rose-500 to-orange-500"
           className="border-2 border-orange-500"
         />
-        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
-          <Percent size={12} />
-          {stretchRate}% des jours avec étirements
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-2 text-xs font-semibold text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+            <Trophy size={12} />
+            Record : {bestStretchingStreak} j
+          </div>
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-2 text-xs font-semibold text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+            <Percent size={12} />
+            {stretchRate}% ratio
+          </div>
         </div>
       </div>
 
@@ -72,7 +79,7 @@ export default function Dashboard() {
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Répartition des séances</h2>
-        <SessionsBarChart counts={sessions} />
+        <SessionsRadarChart counts={sessions} />
       </section>
 
       <Sheet open={editing} title="Journal du jour" onClose={() => setEditing(false)}>
