@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Utensils, Moon, Flame, Percent, Trophy, ChevronRight } from 'lucide-react'
+import { Utensils, Moon, Flame, Trophy, Armchair, Footprints, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { average, resultCounts, currentStreak, bestStreak, stretchingRate, sessionCounts } from '../lib/stats'
 import { formatLong, todayISO } from '../lib/format'
 import StatCard from '../components/StatCard'
 import ResultDonut from '../components/ResultDonut'
 import SessionsRadarChart from '../components/SessionsRadarChart'
+import YinYang from '../components/YinYang'
 import Sheet from '../components/Sheet'
 import EntryForm from '../components/EntryForm'
 
@@ -22,6 +23,9 @@ export default function Dashboard() {
   const bestStretchingStreak = bestStreak(entries, (e) => e.stretching)
   const stretchRate = stretchingRate(entries)
   const sessions = sessionCounts(entries)
+  const radarSessions = sessions.filter((s) => s.type !== 'Repos' && s.type !== 'Autre')
+  const reposCount = sessions.find((s) => s.type === 'Repos')?.count ?? 0
+  const autreCount = sessions.find((s) => s.type === 'Autre')?.count ?? 0
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-4">
@@ -66,7 +70,7 @@ export default function Dashboard() {
             Record : {bestStretchingStreak} j
           </div>
           <div className="flex items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-2 text-xs font-semibold text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
-            <Percent size={12} />
+            <YinYang size={12} />
             {stretchRate}% ratio
           </div>
         </div>
@@ -79,8 +83,19 @@ export default function Dashboard() {
 
       <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Répartition des séances</h2>
-        <SessionsRadarChart counts={sessions} />
+        <SessionsRadarChart counts={radarSessions} />
       </section>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          <Armchair size={12} />
+          Repos : {reposCount}
+        </div>
+        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          <Footprints size={12} />
+          Autre : {autreCount}
+        </div>
+      </div>
 
       <Sheet open={editing} title="Journal du jour" onClose={() => setEditing(false)}>
         <EntryForm
