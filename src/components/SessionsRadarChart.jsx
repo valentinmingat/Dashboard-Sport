@@ -1,13 +1,22 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer } from 'recharts'
 
-const SHORT_LABELS = {
+const DISPLAY_LABELS = {
+  'Pecs / Épaules / Triceps': 'Pecs / Épaules / Triceps',
   'Jambes': 'Jambes',
-  'Pecs / Épaules / Triceps': 'Pecs',
-  'Biceps / Dos / Abdos': 'Biceps',
+  'Biceps / Dos / Abdos': 'Biceps / Dos',
 }
 
+// Pecs/Épaules/Triceps is the longest label, so it goes to the top vertex
+// (the only spot with enough width to stay on one line) and swaps places
+// with Jambes, which fits fine at a side vertex.
+const ORDER = ['Pecs / Épaules / Triceps', 'Jambes', 'Biceps / Dos / Abdos']
+
 export default function SessionsRadarChart({ counts }) {
-  const data = counts.map(({ type, count }) => ({ type: `${SHORT_LABELS[type] ?? type} ${count}`, count }))
+  const byType = Object.fromEntries(counts.map(({ type, count }) => [type, count]))
+  const data = ORDER.map((type) => {
+    const count = byType[type] ?? 0
+    return { type: `${DISPLAY_LABELS[type]} ${count}`, count }
+  })
 
   return (
     <div className="h-64 w-full">
