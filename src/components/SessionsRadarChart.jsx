@@ -7,14 +7,14 @@ const SHORT_LABELS = {
 }
 
 export default function SessionsRadarChart({ counts }) {
-  const data = counts.map(({ type, count }) => ({ type: SHORT_LABELS[type] ?? type, count }))
+  const data = counts.map(({ type, count }) => ({ type: `${SHORT_LABELS[type] ?? type} ${count}`, count }))
 
   return (
     <div className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart data={data} outerRadius="65%">
+        <RadarChart data={data} outerRadius="60%">
           <PolarGrid stroke="currentColor" className="text-slate-200 dark:text-neutral-700" />
-          <PolarAngleAxis dataKey="type" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+          <PolarAngleAxis dataKey="type" tick={{ fontSize: 14, fill: '#94a3b8' }} />
           <Radar
             dataKey="count"
             stroke="#f97316"
@@ -22,7 +22,6 @@ export default function SessionsRadarChart({ counts }) {
             fill="#f97316"
             fillOpacity={0.3}
             dot={{ r: 3, fill: '#f97316', strokeWidth: 0 }}
-            label={{ fontSize: 12, fontWeight: 600, fill: '#fdba74' }}
           />
         </RadarChart>
       </ResponsiveContainer>
