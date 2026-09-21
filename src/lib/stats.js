@@ -41,6 +41,11 @@ export function bestStreak(entries, predicate) {
   return best
 }
 
+export function stretchingRate(entries) {
+  if (!entries.length) return 0
+  return Math.round((entries.filter((e) => e.stretching).length / entries.length) * 100)
+}
+
 export function sessionCounts(entries) {
   return SESSION_TYPES.map((type) => ({
     type,
