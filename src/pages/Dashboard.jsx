@@ -81,19 +81,21 @@ export default function Dashboard() {
         <ResultDonut counts={counts} />
       </section>
 
-      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
-        <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Répartition des séances</h2>
-        <SessionsRadarChart counts={radarSessions} />
-      </section>
+      <div className="flex flex-col gap-2">
+        <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Répartition des séances</h2>
+          <SessionsRadarChart counts={radarSessions} />
+        </section>
 
-      <div className="grid grid-cols-2 gap-2">
-        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
-          <Armchair size={12} />
-          Repos : {reposCount}
-        </div>
-        <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
-          <Footprints size={12} />
-          Autre : {autreCount}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+            <Armchair size={12} />
+            Repos : {reposCount}
+          </div>
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+            <Footprints size={12} />
+            Autre : {autreCount}
+          </div>
         </div>
       </div>
 
