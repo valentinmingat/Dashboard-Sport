@@ -18,6 +18,10 @@ import {
   writeCloudWeightLog,
   deleteCloudWeightLog,
   subscribeWeightLogs,
+  fetchWorkoutsOnce,
+  writeCloudWorkout,
+  deleteCloudWorkout,
+  subscribeWorkouts,
   fetchLegacyDoc,
 } from './firebase'
 
@@ -30,19 +34,35 @@ function countFilled(obj) {
 function loadInitial() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) return { workouts: [], ...JSON.parse(raw) }
   } catch {
     // ignore corrupted storage
   }
-  return { entries: seedEntries, weight: seedWeight }
+  return { entries: seedEntries, weight: seedWeight, workouts: [] }
 }
 
 function describeError(err) {
   return err?.code || err?.message || String(err)
 }
 
+function describeWorkoutError(err) {
+  return `Séances : ${describeError(err)}`
+}
+
 function hasValidDate(item) {
   return typeof item?.date === 'string' && item.date.length > 0
+}
+
+function byDateDesc(a, b) {
+  return a.date < b.date ? 1 : -1
+}
+
+async function replaceCloudWorkouts(uid, workouts) {
+  const valid = workouts.filter(hasValidDate)
+  const keepDates = new Set(valid.map((w) => w.date))
+  const cloud = await fetchWorkoutsOnce(uid)
+  await Promise.all(valid.map((w) => writeCloudWorkout(uid, w)))
+  await Promise.all(cloud.filter((w) => !keepDates.has(w.date)).map((w) => deleteCloudWorkout(uid, w.date)))
 }
 
 const StoreContext = createContext(null)
@@ -80,6 +100,10 @@ export function StoreProvider({ children }) {
   const reconcileWithCloud = useCallback(async (uid) => {
     setSyncStatus('syncing')
     setSyncError('')
+    // Read local data before the first await: the live subscriptions start in
+    // parallel and replace state with the cloud's copy as soon as it lands,
+    // which would hide anything that so far only exists on this device.
+    const local = stateRef.current
     try {
       let cloudEntries = await fetchEntriesOnce(uid)
       let cloudGoal = await fetchGoalOnce(uid)
@@ -111,33 +135,49 @@ export function StoreProvider({ children }) {
 
       const cloudEntryMap = new Map(cloudEntries.map((e) => [e.date, e]))
       await Promise.all(
-        stateRef.current.entries.filter(hasValidDate).map((local) => {
-          const cloud = cloudEntryMap.get(local.date)
-          if (!cloud) return writeCloudEntry(uid, local)
-          const localTime = local.updatedAt ?? 0
+        local.entries.filter(hasValidDate).map((entry) => {
+          const cloud = cloudEntryMap.get(entry.date)
+          if (!cloud) return writeCloudEntry(uid, entry)
+          const localTime = entry.updatedAt ?? 0
           const cloudTime = cloud.updatedAt ?? 0
-          const localWins = localTime !== cloudTime ? localTime > cloudTime : countFilled(local) > countFilled(cloud)
-          return localWins ? writeCloudEntry(uid, local) : null
+          const localWins = localTime !== cloudTime ? localTime > cloudTime : countFilled(entry) > countFilled(cloud)
+          return localWins ? writeCloudEntry(uid, entry) : null
         }),
       )
 
       if (!cloudGoal) {
-        const { logs: _logs, ...goal } = stateRef.current.weight
+        const { logs: _logs, ...goal } = local.weight
         await writeCloudGoal(uid, goal)
       }
 
       const cloudLogMap = new Map(cloudLogs.map((l) => [l.date, l]))
       await Promise.all(
-        (stateRef.current.weight.logs ?? [])
+        (local.weight.logs ?? [])
           .filter(hasValidDate)
           .filter((l) => !cloudLogMap.has(l.date))
           .map((l) => writeCloudWeightLog(uid, l)),
       )
-
-      setSyncStatus('synced')
     } catch (err) {
       setSyncStatus('error')
       setSyncError(describeError(err))
+      return
+    }
+
+    // Séances live in their own collection under their own security rule, so
+    // a failure here (e.g. that rule not added yet) must not undo the sync above.
+    try {
+      const cloudWorkoutMap = new Map((await fetchWorkoutsOnce(uid)).map((w) => [w.date, w]))
+      await Promise.all(
+        local.workouts.filter(hasValidDate).map((workout) => {
+          const cloud = cloudWorkoutMap.get(workout.date)
+          const localWins = !cloud || (workout.updatedAt ?? 0) > (cloud.updatedAt ?? 0)
+          return localWins ? writeCloudWorkout(uid, workout) : null
+        }),
+      )
+      setSyncStatus('synced')
+    } catch (err) {
+      setSyncStatus('error')
+      setSyncError(describeWorkoutError(err))
     }
   }, [])
 
@@ -191,10 +231,22 @@ export function StoreProvider({ children }) {
       },
       onSubscriptionError,
     )
+    const unsubWorkouts = subscribeWorkouts(
+      user.uid,
+      (workouts, isLocalWrite) => {
+        if (isLocalWrite) return
+        setState((prev) => ({ ...prev, workouts: [...workouts].sort(byDateDesc) }))
+      },
+      (err) => {
+        setSyncStatus('error')
+        setSyncError(describeWorkoutError(err))
+      },
+    )
     return () => {
       unsubEntries()
       unsubGoal()
       unsubLogs()
+      unsubWorkouts()
     }
   }, [user])
 
@@ -253,6 +305,25 @@ export function StoreProvider({ children }) {
     }
   }, [])
 
+  const upsertWorkout = useCallback((workout) => {
+    const existing = stateRef.current.workouts.find((w) => w.date === workout.date)
+    const merged = { ...existing, ...workout, updatedAt: Date.now() }
+    setState((prev) => ({
+      ...prev,
+      workouts: [...prev.workouts.filter((w) => w.date !== merged.date), merged].sort(byDateDesc),
+    }))
+    if (userRef.current) {
+      writeCloudWorkout(userRef.current.uid, merged).catch((err) => setSyncError(describeWorkoutError(err)))
+    }
+  }, [])
+
+  const deleteWorkout = useCallback((date) => {
+    setState((prev) => ({ ...prev, workouts: prev.workouts.filter((w) => w.date !== date) }))
+    if (userRef.current) {
+      deleteCloudWorkout(userRef.current.uid, date).catch((err) => setSyncError(describeWorkoutError(err)))
+    }
+  }, [])
+
   const updateGoal = useCallback((goal) => {
     let mergedGoal
     setState((prev) => {
@@ -286,20 +357,25 @@ export function StoreProvider({ children }) {
   }, [])
 
   const resetAll = useCallback(() => {
-    setState({ entries: seedEntries, weight: seedWeight })
+    setState({ entries: seedEntries, weight: seedWeight, workouts: [] })
     const uid = userRef.current?.uid
     if (!uid) return
     replaceCloudWith(uid, seedEntries, seedWeight).catch((err) => setSyncError(describeError(err)))
+    replaceCloudWorkouts(uid, []).catch((err) => setSyncError(describeWorkoutError(err)))
   }, [replaceCloudWith])
 
   const replaceAll = useCallback(
     (data) => {
       const entries = Array.isArray(data.entries) ? data.entries : seedEntries
       const weight = data.weight && typeof data.weight === 'object' ? data.weight : seedWeight
-      setState({ entries, weight })
+      // Backups exported before Séances existed carry no workouts: keep the
+      // current ones instead of wiping them.
+      const workouts = Array.isArray(data.workouts) ? data.workouts : null
+      setState((prev) => ({ entries, weight, workouts: workouts ?? prev.workouts }))
       const uid = userRef.current?.uid
       if (!uid) return
       replaceCloudWith(uid, entries, weight).catch((err) => setSyncError(describeError(err)))
+      if (workouts) replaceCloudWorkouts(uid, workouts).catch((err) => setSyncError(describeWorkoutError(err)))
     },
     [replaceCloudWith],
   )
@@ -308,10 +384,13 @@ export function StoreProvider({ children }) {
     () => ({
       entries: state.entries,
       weight: state.weight,
+      workouts: state.workouts,
       upsertEntry,
       deleteEntry,
       addWeightLog,
       deleteWeightLog,
+      upsertWorkout,
+      deleteWorkout,
       updateGoal,
       resetAll,
       replaceAll,
@@ -330,6 +409,8 @@ export function StoreProvider({ children }) {
       deleteEntry,
       addWeightLog,
       deleteWeightLog,
+      upsertWorkout,
+      deleteWorkout,
       updateGoal,
       resetAll,
       replaceAll,
