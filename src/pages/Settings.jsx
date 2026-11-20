@@ -7,6 +7,7 @@ export default function Settings() {
   const {
     entries,
     weight,
+    workouts,
     updateGoal,
     resetAll,
     replaceAll,
@@ -59,7 +60,7 @@ export default function Settings() {
   }
 
   const handleExport = () => {
-    const data = { entries, weight, exportedAt: new Date().toISOString() }
+    const data = { entries, weight, workouts, exportedAt: new Date().toISOString() }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')

@@ -4,12 +4,14 @@ import ErrorBoundary from './components/ErrorBoundary'
 import BottomNav from './components/BottomNav'
 import Dashboard from './pages/Dashboard'
 import Journal from './pages/Journal'
+import Seances from './pages/Seances'
 import Weight from './pages/Weight'
 import Settings from './pages/Settings'
 
 const PAGES = {
   dashboard: Dashboard,
   journal: Journal,
+  seances: Seances,
   weight: Weight,
   settings: Settings,
 }

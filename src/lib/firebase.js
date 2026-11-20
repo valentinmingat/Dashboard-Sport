@@ -138,6 +138,29 @@ export function subscribeWeightLogs(uid, callback, onError) {
   )
 }
 
+// --- Workout notes ("Séances"): one document per date, like entries. ---
+
+export async function fetchWorkoutsOnce(uid) {
+  const snap = await getDocs(collection(db, 'users', uid, 'workouts'))
+  return snap.docs.map((d) => d.data())
+}
+
+export async function writeCloudWorkout(uid, workout) {
+  await setDoc(doc(db, 'users', uid, 'workouts', workout.date), workout)
+}
+
+export async function deleteCloudWorkout(uid, date) {
+  await deleteDoc(doc(db, 'users', uid, 'workouts', date))
+}
+
+export function subscribeWorkouts(uid, callback, onError) {
+  return onSnapshot(
+    collection(db, 'users', uid, 'workouts'),
+    (snap) => callback(snap.docs.map((d) => d.data()), snap.metadata.hasPendingWrites),
+    onError,
+  )
+}
+
 // --- One-off migration from the old single-document format
 // (users/{uid} holding the whole { entries, weight } blob). ---
 

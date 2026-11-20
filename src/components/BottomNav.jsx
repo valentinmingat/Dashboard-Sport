@@ -1,8 +1,9 @@
-import { Home, NotebookPen, LineChart, Settings } from 'lucide-react'
+import { Home, NotebookPen, Dumbbell, LineChart, Settings } from 'lucide-react'
 
 const TABS = [
   { id: 'dashboard', label: 'Accueil', icon: Home },
   { id: 'journal', label: 'Journal', icon: NotebookPen },
+  { id: 'seances', label: 'Séances', icon: Dumbbell },
   { id: 'weight', label: 'Poids', icon: LineChart },
   { id: 'settings', label: 'Réglages', icon: Settings },
 ]
