@@ -4,7 +4,7 @@ import { SESSION_TYPES } from '../data/seed'
 import { SESSION_COLORS } from '../lib/sessionColors'
 import { formatLong, todayISO } from '../lib/format'
 
-const PLACEHOLDER = '- Triple Attack Biceps\n   - 3 x 8 x 20\n- Tirage vertical\n   - 3 x 8 x 60'
+const PLACEHOLDER = '- Triple Attack biceps : 3 x 8 x 20\n- Tirage vertical : 3 x 8 x (50 / 60 / 65)'
 
 export default function WorkoutForm({ initial, existingDates = [], sessionForDate, onSave, onCancel }) {
   const isNew = !initial
