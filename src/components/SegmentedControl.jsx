@@ -1,13 +1,19 @@
-export default function SegmentedControl({ options, value, onChange, colorFor }) {
+export default function SegmentedControl({ options, value, onChange, colorFor, multiple = false }) {
+  const isActive = (opt) => (multiple ? value.includes(opt) : value === opt)
+  const select = (opt) => {
+    if (!multiple) onChange(opt)
+    else onChange(isActive(opt) ? value.filter((v) => v !== opt) : [...value, opt])
+  }
+
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((opt) => {
-        const active = value === opt
+        const active = isActive(opt)
         return (
           <button
             key={opt}
             type="button"
-            onClick={() => onChange(opt)}
+            onClick={() => select(opt)}
             className={`rounded-full px-3.5 py-2 text-sm font-medium transition-all active:scale-[0.96] ${
               active
                 ? `${colorFor ? colorFor(opt) : 'bg-orange-500 text-white'} shadow-sm`
