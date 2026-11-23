@@ -168,3 +168,7 @@ export async function fetchLegacyDoc(uid) {
   const snap = await getDoc(doc(db, 'users', uid))
   return snap.exists() ? snap.data() : null
 }
+
+export async function deleteLegacyDoc(uid) {
+  await deleteDoc(doc(db, 'users', uid))
+}

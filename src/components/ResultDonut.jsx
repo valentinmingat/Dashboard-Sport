@@ -9,7 +9,7 @@ export default function ResultDonut({ counts }) {
 
   return (
     <div className="relative flex items-center gap-4">
-      <div className="relative h-28 w-28 shrink-0">
+      <div className="relative h-28 w-28 shrink-0 text-slate-200 dark:text-neutral-700">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -24,7 +24,7 @@ export default function ResultDonut({ counts }) {
             >
               {hasData
                 ? data.map((d) => <Cell key={d.name} fill={COLORS[d.name]} />)
-                : [<Cell key="empty" fill="#e2e8f0" />]}
+                : [<Cell key="empty" fill="currentColor" />]}
             </Pie>
           </PieChart>
         </ResponsiveContainer>

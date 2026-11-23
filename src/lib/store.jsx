@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react'
-import { seedEntries, seedWeight } from '../data/seed'
+import { EMPTY_WEIGHT } from '../data/seed'
 import {
   isConfigured,
   watchAuth,
@@ -23,6 +23,7 @@ import {
   deleteCloudWorkout,
   subscribeWorkouts,
   fetchLegacyDoc,
+  deleteLegacyDoc,
 } from './firebase'
 
 const STORAGE_KEY = 'sport-track:v1'
@@ -38,7 +39,7 @@ function loadInitial() {
   } catch {
     // ignore corrupted storage
   }
-  return { entries: seedEntries, weight: seedWeight, workouts: [] }
+  return { entries: [], weight: EMPTY_WEIGHT, workouts: [] }
 }
 
 function describeError(err) {
@@ -357,17 +358,21 @@ export function StoreProvider({ children }) {
   }, [])
 
   const resetAll = useCallback(() => {
-    setState({ entries: seedEntries, weight: seedWeight, workouts: [] })
+    setState({ entries: [], weight: EMPTY_WEIGHT, workouts: [] })
     const uid = userRef.current?.uid
     if (!uid) return
-    replaceCloudWith(uid, seedEntries, seedWeight).catch((err) => setSyncError(describeError(err)))
+    // The pre-migration document would otherwise be re-imported into the now
+    // empty collections on the next sync, undoing the reset.
+    Promise.all([replaceCloudWith(uid, [], EMPTY_WEIGHT), deleteLegacyDoc(uid)]).catch((err) =>
+      setSyncError(describeError(err)),
+    )
     replaceCloudWorkouts(uid, []).catch((err) => setSyncError(describeWorkoutError(err)))
   }, [replaceCloudWith])
 
   const replaceAll = useCallback(
     (data) => {
-      const entries = Array.isArray(data.entries) ? data.entries : seedEntries
-      const weight = data.weight && typeof data.weight === 'object' ? data.weight : seedWeight
+      const entries = Array.isArray(data.entries) ? data.entries : []
+      const weight = data.weight && typeof data.weight === 'object' ? data.weight : EMPTY_WEIGHT
       // Backups exported before Séances existed carry no workouts: keep the
       // current ones instead of wiping them.
       const workouts = Array.isArray(data.workouts) ? data.workouts : null
