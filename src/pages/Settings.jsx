@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2, RefreshCw, AlertTriangle } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayISO } from '../lib/format'
+import { EMPTY_WEIGHT } from '../data/seed'
 
 export default function Settings() {
   const {
@@ -276,7 +277,13 @@ export default function Settings() {
         <button
           type="button"
           onClick={() => {
-            if (confirm('Réinitialiser toutes les données ? Cette action est irréversible.')) resetAll()
+            const message =
+              'Réinitialiser toutes les données ? Journal, séances, pesées et objectif de poids seront effacés, ' +
+              (user ? 'sur cet appareil et dans ta sauvegarde en ligne.' : 'sur cet appareil.') +
+              ' Cette action est irréversible.'
+            if (!confirm(message)) return
+            resetAll()
+            setForm(EMPTY_WEIGHT)
           }}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-50 py-3 text-sm font-semibold text-rose-600 active:scale-[0.98] dark:bg-rose-500/10 dark:text-rose-400"
         >

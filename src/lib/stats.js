@@ -53,6 +53,14 @@ export function sessionCounts(entries) {
   }))
 }
 
+export function hasWeightGoal(weight) {
+  return (
+    Boolean(weight.startDate && weight.goalDate) &&
+    typeof weight.startWeight === 'number' &&
+    typeof weight.goalWeight === 'number'
+  )
+}
+
 export function latestWeight(weight) {
   if (!weight.logs.length) return weight.startWeight
   const sorted = [...weight.logs].sort((a, b) => (a.date > b.date ? 1 : -1))
