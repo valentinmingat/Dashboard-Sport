@@ -22,7 +22,7 @@ export default function Weight({ onNavigate }) {
     <div className="flex flex-col gap-4 px-4 pb-6 pt-4">
       <header className="flex items-center justify-between px-1">
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Poids</h1>
-        {typeof current === 'number' && (
+        {(goalSet || sortedLogs.length > 0) && (
           <button
             type="button"
             onClick={() => {

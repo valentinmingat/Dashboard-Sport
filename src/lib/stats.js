@@ -53,12 +53,12 @@ export function sessionCounts(entries) {
   }))
 }
 
+function isFilled(value) {
+  return value !== '' && value !== null && value !== undefined && Number.isFinite(Number(value))
+}
+
 export function hasWeightGoal(weight) {
-  return (
-    Boolean(weight.startDate && weight.goalDate) &&
-    typeof weight.startWeight === 'number' &&
-    typeof weight.goalWeight === 'number'
-  )
+  return Boolean(weight.startDate && weight.goalDate) && isFilled(weight.startWeight) && isFilled(weight.goalWeight)
 }
 
 export function latestWeight(weight) {
