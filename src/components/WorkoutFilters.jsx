@@ -1,11 +1,18 @@
 import SegmentedControl from './SegmentedControl'
+import ExerciseNameInput from './ExerciseNameInput'
 import { SESSION_TYPES } from '../data/seed'
 import { SESSION_COLORS } from '../lib/sessionColors'
 import { PERIODS, NO_FILTERS, activeFilterCount } from '../lib/workoutFilters'
 import { todayISO } from '../lib/format'
+import { searchExercises } from '../lib/workouts'
 
-export default function WorkoutFilters({ filters, onChange, resultCount, onClose }) {
+export default function WorkoutFilters({ filters, history, onChange, resultCount, onClose }) {
   const set = (patch) => onChange({ ...filters, ...patch })
+  // Nothing typed yet: every exercise, alphabetically, to browse.
+  const exerciseSuggestions = (query) =>
+    query.trim()
+      ? searchExercises(history, query)
+      : [...history.values()].map((h) => h.name).sort((a, b) => a.localeCompare(b, 'fr'))
 
   return (
     <div className="flex flex-col gap-5">
@@ -17,6 +24,21 @@ export default function WorkoutFilters({ filters, onChange, resultCount, onClose
           onChange={(types) => set({ types })}
           colorFor={(o) => SESSION_COLORS[o]}
         />
+      </Field>
+
+      <Field label="Exercice">
+        {history.size > 0 ? (
+          <ExerciseNameInput
+            value={filters.exercise}
+            placeholder="Tous les exercices"
+            clearable
+            onChange={(exercise) => set({ exercise })}
+            onPick={(exercise) => set({ exercise })}
+            suggestionsFor={exerciseSuggestions}
+          />
+        ) : (
+          <p className="text-xs text-slate-400">Les exercices de tes séances apparaîtront ici.</p>
+        )}
       </Field>
 
       <Field label="Période">

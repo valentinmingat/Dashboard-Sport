@@ -3,6 +3,7 @@ import { Plus, SlidersHorizontal } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { SESSION_TYPES } from '../data/seed'
 import { NO_FILTERS, matchesFilters, activeFilterCount } from '../lib/workoutFilters'
+import { exerciseHistory, exerciseMatcher } from '../lib/workouts'
 import WorkoutCard from '../components/WorkoutCard'
 import WorkoutForm from '../components/WorkoutForm'
 import WorkoutFilters from '../components/WorkoutFilters'
@@ -15,9 +16,10 @@ export default function Seances() {
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const sorted = useMemo(() => [...workouts].sort((a, b) => (a.date < b.date ? 1 : -1)), [workouts])
-  const visible = useMemo(() => sorted.filter((w) => matchesFilters(w, filters)), [sorted, filters])
+  const history = useMemo(() => exerciseHistory(workouts), [workouts])
+  const exerciseMatch = useMemo(() => exerciseMatcher(history, filters.exercise), [history, filters.exercise])
+  const visible = useMemo(() => sorted.filter((w) => matchesFilters(w, filters, exerciseMatch)), [sorted, filters, exerciseMatch])
   const filterCount = activeFilterCount(filters)
-  const existingDates = useMemo(() => workouts.map((w) => w.date), [workouts])
   const sessionForDate = (date) => entries.find((e) => e.date === date)?.session ?? SESSION_TYPES[0]
 
   const editingWorkout = target === 'new' ? null : workouts.find((w) => w.date === target)
@@ -77,6 +79,7 @@ export default function Seances() {
             <WorkoutCard
               key={workout.date}
               workout={workout}
+              exerciseMatch={exerciseMatch}
               onEdit={() => setTarget(workout.date)}
               onDelete={() => {
                 if (confirm('Supprimer cette séance ?')) deleteWorkout(workout.date)
@@ -90,7 +93,8 @@ export default function Seances() {
         {sheetOpen && (
           <WorkoutForm
             initial={editingWorkout}
-            existingDates={existingDates}
+            workouts={workouts}
+            history={history}
             sessionForDate={sessionForDate}
             onCancel={() => setTarget(null)}
             onSave={(workout) => {
@@ -104,6 +108,7 @@ export default function Seances() {
       <Sheet open={filtersOpen} title="Filtres" onClose={() => setFiltersOpen(false)}>
         <WorkoutFilters
           filters={filters}
+          history={history}
           onChange={setFilters}
           resultCount={visible.length}
           onClose={() => setFiltersOpen(false)}

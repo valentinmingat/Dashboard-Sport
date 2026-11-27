@@ -1,6 +1,7 @@
 export const SESSION_TYPES = [
   'Jambes',
   'Pecs / Épaules / Triceps',
+  'Pole',
   'Biceps / Dos / Abdos',
   'Autre',
   'Repos',
