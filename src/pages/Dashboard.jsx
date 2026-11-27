@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Utensils, Moon, Flame, Trophy, Armchair, Footprints, ChevronRight } from 'lucide-react'
+import { Utensils, Moon, Flame, Trophy, Armchair, Footprints, Music, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { average, resultCounts, currentStreak, bestStreak, stretchingRate, sessionCounts } from '../lib/stats'
 import { formatLong, todayISO } from '../lib/format'
@@ -23,9 +23,9 @@ export default function Dashboard() {
   const bestStretchingStreak = bestStreak(entries, (e) => e.stretching)
   const stretchRate = stretchingRate(entries)
   const sessions = sessionCounts(entries)
-  const radarSessions = sessions.filter((s) => s.type !== 'Repos' && s.type !== 'Autre')
   const reposCount = sessions.find((s) => s.type === 'Repos')?.count ?? 0
   const autreCount = sessions.find((s) => s.type === 'Autre')?.count ?? 0
+  const poleCount = sessions.find((s) => s.type === 'Pole')?.count ?? 0
 
   return (
     <div className="flex flex-col gap-5 px-4 pb-6 pt-4">
@@ -84,10 +84,10 @@ export default function Dashboard() {
       <div className="flex flex-col gap-2">
         <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
           <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">Répartition des séances</h2>
-          <SessionsRadarChart counts={radarSessions} />
+          <SessionsRadarChart counts={sessions} />
         </section>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
             <Armchair size={12} />
             Repos : {reposCount}
@@ -95,6 +95,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
             <Footprints size={12} />
             Autre : {autreCount}
+          </div>
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+            <Music size={12} />
+            Pole : {poleCount}
           </div>
         </div>
       </div>
