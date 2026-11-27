@@ -196,11 +196,11 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
             <button
               type="button"
               onClick={() => setExercises(formExercises(template.exercises))}
-              className="flex items-center gap-3 rounded-2xl border border-dashed border-orange-300 px-3.5 py-3 text-left active:scale-[0.98] dark:border-orange-500/40"
+              className="flex items-center gap-3 rounded-2xl border border-dashed border-accent/40 px-3.5 py-3 text-left active:scale-[0.98]"
             >
-              <History size={18} className="shrink-0 text-orange-500" />
+              <History size={18} className="shrink-0 text-accent" />
               <span className="min-w-0">
-                <span className="block text-sm font-semibold text-orange-600 dark:text-orange-400">
+                <span className="block text-sm font-semibold text-accent">
                   Reprendre la séance du {formatDay(template.date).toLowerCase()}
                 </span>
                 <span className="block truncate text-xs text-slate-400">
@@ -242,7 +242,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
                         aria-label={`${column.title}. ${column.switchTo}`}
                         className={`mx-auto flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 active:scale-95 ${
                           ex.unit === UNITS.min
-                            ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+                            ? 'bg-accent/15 text-accent'
                             : 'bg-slate-200/70 text-slate-500 dark:bg-neutral-700/70 dark:text-slate-400'
                         }`}
                       >
@@ -291,7 +291,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
                   <button
                     type="button"
                     onClick={() => addSet(ex.id)}
-                    className="flex items-center gap-1 py-1 text-sm font-semibold text-orange-500 active:scale-95"
+                    className="flex items-center gap-1 py-1 text-sm font-semibold text-accent active:scale-95"
                   >
                     <Plus size={15} strokeWidth={2.5} />
                     Ajouter une série
@@ -311,7 +311,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
           <button
             type="button"
             onClick={addExercise}
-            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-300 py-3 text-sm font-semibold text-orange-500 active:scale-[0.98] dark:border-neutral-700"
+            className="flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-slate-300 py-3 text-sm font-semibold text-accent active:scale-[0.98] dark:border-neutral-700"
           >
             <Plus size={16} strokeWidth={2.5} />
             Ajouter un exercice
@@ -323,7 +323,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Notes (ressenti, échauffement…)"
-              className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700 placeholder:text-slate-300 focus:border-orange-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-200 dark:placeholder:text-slate-500"
+              className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700 placeholder:text-slate-300 focus:border-accent focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-200 dark:placeholder:text-slate-500"
             />
           ) : (
             <button
@@ -348,7 +348,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
         <button
           type="submit"
           disabled={!canSave}
-          className="flex-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
+          className="flex-1 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98] disabled:opacity-40"
         >
           Enregistrer
         </button>
@@ -358,7 +358,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
 }
 
 const NUMBER_FIELD =
-  'w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-700 placeholder:text-slate-300 focus:border-orange-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-200 dark:placeholder:text-slate-600'
+  'w-full min-w-0 appearance-none rounded-xl border border-slate-200 bg-white px-2 py-2 text-center text-sm text-slate-700 placeholder:text-slate-300 focus:border-accent focus:outline-none dark:border-neutral-700 dark:bg-[var(--theme-input)] dark:text-slate-200 dark:placeholder:text-slate-600'
 
 function Field({ label, children }) {
   return (

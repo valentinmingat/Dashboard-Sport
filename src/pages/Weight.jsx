@@ -29,7 +29,7 @@ export default function Weight({ onNavigate }) {
               setDraft({ date: todayISO(), value: current })
               setOpen(true)
             }}
-            className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-orange-500 to-red-600 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-red-600/25 active:scale-95"
+            className="flex items-center gap-1.5 rounded-full bg-gradient-to-br from-accent to-accent-2 px-3.5 py-2 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/25 active:scale-95"
           >
             <Plus size={16} strokeWidth={2.5} />
             Peser
@@ -39,7 +39,7 @@ export default function Weight({ onNavigate }) {
 
       {!goalSet && (
         <section className="animate-pop flex flex-col items-center gap-3 rounded-2xl bg-white px-5 py-6 text-center shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
-          <Target size={28} className="text-orange-500" />
+          <Target size={28} className="text-accent" />
           <div>
             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Aucun objectif de poids</p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -49,7 +49,7 @@ export default function Weight({ onNavigate }) {
           <button
             type="button"
             onClick={() => onNavigate('settings')}
-            className="rounded-full bg-gradient-to-br from-orange-500 to-red-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-red-600/25 active:scale-95"
+            className="rounded-full bg-gradient-to-br from-accent to-accent-2 px-4 py-2 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/25 active:scale-95"
           >
             Définir mon objectif
           </button>
@@ -69,7 +69,7 @@ export default function Weight({ onNavigate }) {
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-neutral-700">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-orange-500 to-emerald-500 transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-accent to-emerald-500 transition-all"
                 style={{ width: `${Math.round(progress * 100)}%` }}
               />
             </div>
@@ -142,7 +142,7 @@ export default function Weight({ onNavigate }) {
                 addWeightLog({ date: draft.date, weight: draft.value })
                 setOpen(false)
               }}
-              className="flex-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
+              className="flex-1 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98]"
             >
               Enregistrer
             </button>

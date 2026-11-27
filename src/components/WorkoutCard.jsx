@@ -36,7 +36,7 @@ export default function WorkoutCard({ workout, exerciseMatch, onEdit, onDelete }
         {shown.map((ex, i) => (
           <div key={i} className="flex flex-col gap-1.5">
             <p className="flex gap-2 break-words font-medium text-slate-700 dark:text-slate-200">
-              <span aria-hidden="true" className="text-orange-500">
+              <span aria-hidden="true" className="text-accent">
                 •
               </span>
               <span className="min-w-0">{ex.name}</span>
@@ -86,7 +86,7 @@ function NotesText({ text }) {
           </p>
         ) : (
           <p key={i} className="flex gap-2 break-words font-medium text-slate-700 dark:text-slate-200">
-            <span aria-hidden="true" className="text-orange-500">
+            <span aria-hidden="true" className="text-accent">
               •
             </span>
             <span className="min-w-0">{content}</span>

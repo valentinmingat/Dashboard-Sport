@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
+          className="flex items-center gap-2 rounded-2xl bg-gradient-to-br from-accent to-accent-2 px-5 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98]"
         >
           <RotateCcw size={15} />
           Recharger l'application

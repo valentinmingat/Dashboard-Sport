@@ -16,7 +16,7 @@ export default function WeightChart({ weight }) {
   const max = Math.ceil(Math.max(...weights) + 1)
 
   return (
-    <div className="h-56 w-full">
+    <div className="weight-chart h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={points} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
           <CartesianGrid stroke="currentColor" className="text-slate-100 dark:text-neutral-800" vertical={false} />
@@ -43,8 +43,8 @@ export default function WeightChart({ weight }) {
           <ReferenceDot x={end} y={goalWeight} r={5} fill="#10b981" stroke="white" strokeWidth={2} />
           <defs>
             <linearGradient id="weightGradient" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#f97316" />
-              <stop offset="100%" stopColor="#dc2626" />
+              <stop offset="0%" style={{ stopColor: 'var(--color-accent)' }} />
+              <stop offset="100%" style={{ stopColor: 'var(--color-accent-2)' }} />
             </linearGradient>
           </defs>
         </ComposedChart>
