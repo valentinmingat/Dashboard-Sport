@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { History, Plus, X } from 'lucide-react'
+import { ArrowLeftRight, History, Plus, X } from 'lucide-react'
 import SegmentedControl from './SegmentedControl'
 import ExerciseNameInput from './ExerciseNameInput'
 import { SESSION_TYPES } from '../data/seed'
@@ -15,6 +15,8 @@ import {
   parseAmount,
   previousUse,
   searchExercises,
+  toStoredExercise,
+  UNITS,
   workoutContent,
   workoutDetail,
 } from '../lib/workouts'
@@ -25,11 +27,18 @@ let lastId = 0
 const nextId = () => ++lastId
 
 const toText = (value) => (value == null ? '' : formatAmount(value))
-const formSets = (sets) => sets.map((set) => ({ id: nextId(), reps: toText(set.reps), load: toText(set.load) }))
-const formExercises = (exercises) => exercises.map((ex) => ({ id: nextId(), name: ex.name, sets: formSets(ex.sets) }))
-const emptyExercise = () => ({ id: nextId(), name: '', sets: [{ id: nextId(), reps: '', load: '' }] })
+const formSets = (sets) => sets.map((set) => ({ id: nextId(), reps: toText(set.reps), amount: toText(set.amount) }))
+const formExercises = (exercises) =>
+  exercises.map((ex) => ({ id: nextId(), name: ex.name, unit: ex.unit, sets: formSets(ex.sets) }))
+const emptyExercise = () => ({ id: nextId(), name: '', unit: UNITS.kg, sets: [{ id: nextId(), reps: '', amount: '' }] })
 
-const isBlankSet = (set) => !set.reps && !set.load
+// Most exercises are weighted; the column switches to minutes for timed ones.
+const AMOUNT_COLUMN = {
+  kg: { title: 'Charge (kg)', field: 'Charge en kg', switchTo: 'Passer en temps (minutes)' },
+  min: { title: 'Temps (min)', field: 'Temps en minutes', switchTo: 'Passer en charge (kg)' },
+}
+
+const isBlankSet = (set) => !set.reps && !set.amount
 const isBlankExercise = (ex) => !ex.name.trim() && ex.sets.every(isBlankSet)
 
 const onlyDigits = (text) => text.replace(/\D/g, '').slice(0, 3)
@@ -42,9 +51,10 @@ const onlyDecimal = (text) =>
 function cleanExercise(ex) {
   return {
     name: cleanName(ex.name),
+    unit: ex.unit,
     sets: ex.sets
-      .map((set) => ({ reps: parseAmount(set.reps), load: parseAmount(set.load) }))
-      .filter((set) => set.reps != null || set.load != null),
+      .map((set) => ({ reps: parseAmount(set.reps), amount: parseAmount(set.amount) }))
+      .filter((set) => set.reps != null || set.amount != null),
   }
 }
 
@@ -90,8 +100,11 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
   const addSet = (exerciseId) =>
     updateExercise(exerciseId, (ex) => {
       const last = ex.sets[ex.sets.length - 1]
-      return { ...ex, sets: [...ex.sets, { id: nextId(), reps: last?.reps ?? '', load: last?.load ?? '' }] }
+      return { ...ex, sets: [...ex.sets, { id: nextId(), reps: last?.reps ?? '', amount: last?.amount ?? '' }] }
     })
+
+  const toggleUnit = (exerciseId) =>
+    updateExercise(exerciseId, (ex) => ({ ...ex, unit: ex.unit === UNITS.kg ? UNITS.min : UNITS.kg }))
 
   const removeSet = (exerciseId, setId) =>
     updateExercise(exerciseId, (ex) => ({ ...ex, sets: ex.sets.filter((set) => set.id !== setId) }))
@@ -111,12 +124,13 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
     setExercises((list) => list.filter((item) => item.id !== ex.id))
   }
 
-  // Picking a known exercise fills in its sets from last time, unless some were already typed.
+  // Picking a known exercise fills in its sets (and kg or minutes) from last
+  // time, unless some were already typed.
   const pickName = (id, name) =>
     updateExercise(id, (ex) => {
       const previous = previousUse(history, name, date)
-      const keepSets = !previous || previous.sets.length === 0 || !ex.sets.every(isBlankSet)
-      return { ...ex, name, sets: keepSets ? ex.sets : formSets(previous.sets) }
+      if (!previous || previous.sets.length === 0 || !ex.sets.every(isBlankSet)) return { ...ex, name }
+      return { ...ex, name, unit: previous.unit, sets: formSets(previous.sets) }
     })
 
   const suggestionsFor = (id) => (query) => {
@@ -136,7 +150,14 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
       }}
       onSubmit={(e) => {
         e.preventDefault()
-        if (canSave) onSave({ date, session, exercises: kept, notes: finalNotes, content: workoutContent(kept, finalNotes) })
+        if (!canSave) return
+        onSave({
+          date,
+          session,
+          exercises: kept.map(toStoredExercise),
+          notes: finalNotes,
+          content: workoutContent(kept, finalNotes),
+        })
       }}
     >
       {isNew ? (
@@ -191,6 +212,7 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
 
           {exercises.map((ex, i) => {
             const previous = ex.name.trim() ? previousUse(history, ex.name, date) : null
+            const column = AMOUNT_COLUMN[ex.unit]
             return (
               <div key={ex.id} className="flex flex-col gap-2.5 rounded-2xl bg-slate-50 p-3 dark:bg-neutral-800/50">
                 <ExerciseNameInput
@@ -204,16 +226,29 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
                 {missingName(i) && <span className="text-xs font-medium text-rose-500">Indique le nom de l'exercice.</span>}
                 {previous && previous.sets.length > 0 && (
                   <p className="px-1 text-xs text-slate-400">
-                    Dernière fois ({formatShort(previous.date)}) : {previous.sets.map(formatSet).join(' · ')}
+                    Dernière fois ({formatShort(previous.date)}) :{' '}
+                    {previous.sets.map((set) => formatSet(set, previous.unit)).join(' · ')}
                   </p>
                 )}
 
                 {ex.sets.length > 0 && (
                   <div className="flex flex-col gap-1.5">
-                    <div className="grid grid-cols-[2.25rem_1fr_1fr_2rem] gap-2 px-0.5 text-center text-[11px] font-medium text-slate-400">
+                    <div className="grid grid-cols-[2.25rem_1fr_1fr_2rem] items-center gap-2 px-0.5 text-center text-[11px] font-medium text-slate-400">
                       <span>Série</span>
                       <span>Répétitions</span>
-                      <span>Charge (kg)</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleUnit(ex.id)}
+                        aria-label={`${column.title}. ${column.switchTo}`}
+                        className={`mx-auto flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 active:scale-95 ${
+                          ex.unit === UNITS.min
+                            ? 'bg-orange-500/15 text-orange-600 dark:text-orange-400'
+                            : 'bg-slate-200/70 text-slate-500 dark:bg-neutral-700/70 dark:text-slate-400'
+                        }`}
+                      >
+                        {column.title}
+                        <ArrowLeftRight size={10} strokeWidth={2.5} />
+                      </button>
                       <span />
                     </div>
                     {ex.sets.map((set, n) => (
@@ -233,10 +268,10 @@ export default function WorkoutForm({ initial, workouts = [], history, sessionFo
                           type="text"
                           inputMode="decimal"
                           enterKeyHint="done"
-                          value={set.load}
+                          value={set.amount}
                           placeholder="–"
-                          aria-label={`Charge en kg, série ${n + 1}`}
-                          onChange={(e) => updateSet(ex.id, set.id, { load: onlyDecimal(e.target.value) })}
+                          aria-label={`${column.field}, série ${n + 1}`}
+                          onChange={(e) => updateSet(ex.id, set.id, { amount: onlyDecimal(e.target.value) })}
                           className={NUMBER_FIELD}
                         />
                         <button

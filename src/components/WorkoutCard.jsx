@@ -48,7 +48,7 @@ export default function WorkoutCard({ workout, exerciseMatch, onEdit, onDelete }
                     key={n}
                     className="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-neutral-700/60 dark:text-slate-300"
                   >
-                    {formatSet(set)}
+                    {formatSet(set, ex.unit)}
                   </span>
                 ))}
               </div>
