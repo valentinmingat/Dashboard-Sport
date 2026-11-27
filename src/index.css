@@ -24,6 +24,25 @@
   border-color: #fb923c;
 }
 
+/* Gradient outline for session types; set --outline-from and --outline-to. */
+@utility session-outline {
+  position: relative;
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    pointer-events: none;
+    background: linear-gradient(to right in oklab, var(--outline-from), var(--outline-to));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .input {
     border-color: #404040;
