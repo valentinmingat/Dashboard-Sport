@@ -25,11 +25,11 @@ export default function BottomNav({ active, onChange }) {
               <Icon
                 size={22}
                 strokeWidth={isActive ? 2.4 : 2}
-                className={isActive ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'}
+                className={isActive ? 'text-accent' : 'text-slate-400 dark:text-slate-500'}
               />
               <span
                 className={`text-[11px] font-medium ${
-                  isActive ? 'text-orange-500' : 'text-slate-400 dark:text-slate-500'
+                  isActive ? 'text-accent' : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
                 {tab.label}

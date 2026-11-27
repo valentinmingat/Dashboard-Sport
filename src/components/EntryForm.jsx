@@ -99,7 +99,7 @@ export default function EntryForm({ date, initial, dateEditable = false, existin
           onChange={(e) => set({ notes: e.target.value })}
           rows={3}
           placeholder="Une remarque sur la journée…"
-          className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 placeholder:text-slate-300 focus:border-orange-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-200"
+          className="w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-700 placeholder:text-slate-300 focus:border-accent focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-200"
         />
       </Field>
 
@@ -114,7 +114,7 @@ export default function EntryForm({ date, initial, dateEditable = false, existin
         <button
           type="submit"
           disabled={dateTaken}
-          className="flex-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
+          className="flex-1 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98] disabled:opacity-40"
         >
           Enregistrer
         </button>

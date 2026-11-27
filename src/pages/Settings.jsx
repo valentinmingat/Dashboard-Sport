@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2, RefreshCw, AlertTriangle } from 'lucide-react'
+import { RotateCcw, Download, Upload, Cloud, CloudOff, Mail, Link2, RefreshCw, AlertTriangle, Palette } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayISO } from '../lib/format'
 import { EMPTY_WEIGHT } from '../data/seed'
+import ThemePicker from '../components/ThemePicker'
 
 export default function Settings() {
   const {
@@ -96,6 +97,13 @@ export default function Settings() {
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Réglages</h1>
       </header>
 
+      <section className="animate-pop rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
+        <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+          <Palette size={16} /> Thème
+        </h2>
+        <ThemePicker />
+      </section>
+
       <section className="animate-pop flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm shadow-slate-200/60 dark:bg-neutral-800 dark:shadow-none">
         <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-200">Objectif de poids</h2>
 
@@ -131,7 +139,7 @@ export default function Settings() {
             setSaved(true)
             setTimeout(() => setSaved(false), 1500)
           }}
-          className="mt-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
+          className="mt-1 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98]"
         >
           {saved ? 'Enregistré ✓' : 'Enregistrer'}
         </button>
@@ -166,7 +174,7 @@ export default function Settings() {
                 type="button"
                 onClick={resync}
                 disabled={syncStatus === 'syncing'}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98] disabled:opacity-40"
               >
                 <RefreshCw size={15} className={syncStatus === 'syncing' ? 'animate-spin' : ''} />
                 Resynchroniser maintenant
@@ -204,7 +212,7 @@ export default function Settings() {
                   type="button"
                   onClick={handleSendLink}
                   disabled={!email.includes('@')}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98] disabled:opacity-40"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98] disabled:opacity-40"
                 >
                   <Mail size={15} />
                   Recevoir un lien de connexion

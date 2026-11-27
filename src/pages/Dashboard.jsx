@@ -36,14 +36,14 @@ export default function Dashboard() {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="animate-pop flex items-center justify-between rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 p-4 text-left text-white shadow-lg shadow-red-600/25 active:scale-[0.98]"
+        className="animate-pop flex items-center justify-between rounded-2xl bg-gradient-to-br from-accent to-accent-2 p-4 text-left text-on-accent shadow-lg shadow-accent-2/25 active:scale-[0.98]"
       >
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-white/70">Aujourd'hui</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-on-accent/70">Aujourd'hui</p>
           <p className="mt-0.5 text-base font-semibold">
             {todayEntry?.session ? `Séance : ${todayEntry.session}` : 'Log ta journée'}
           </p>
-          <p className="mt-1 text-xs text-white/80">
+          <p className="mt-1 text-xs text-on-accent/80">
             {todayEntry ? 'Modifier le suivi du jour' : "Rien d'enregistré pour l'instant"}
           </p>
         </div>
@@ -51,8 +51,8 @@ export default function Dashboard() {
       </button>
 
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Repas moyen" value={avgMeals} unit="/j" icon={Utensils} accent="from-amber-400 to-orange-600" />
-        <StatCard label="Sommeil moyen" value={avgSleep} unit="h" icon={Moon} accent="from-blue-500 to-violet-600" />
+        <StatCard label="Repas moyen" value={avgMeals} unit="/j" icon={Utensils} />
+        <StatCard label="Sommeil moyen" value={avgSleep} unit="h" icon={Moon} />
       </div>
 
       <div className="flex flex-col gap-2">
@@ -61,15 +61,14 @@ export default function Dashboard() {
           value={streak}
           unit="j de suite"
           icon={Flame}
-          accent="from-rose-500 to-orange-500"
-          className="border-2 border-orange-500"
+          className="border-2 border-accent"
         />
         <div className="grid grid-cols-2 gap-2">
-          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-2 text-xs font-semibold text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2 text-xs font-semibold text-accent">
             <Trophy size={12} />
             Record : {bestStretchingStreak} j
           </div>
-          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-orange-50 py-2 text-xs font-semibold text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2 text-xs font-semibold text-accent">
             <YinYang size={12} />
             {stretchRate}% ratio
           </div>
@@ -88,15 +87,15 @@ export default function Dashboard() {
         </section>
 
         <div className="grid grid-cols-3 gap-2">
-          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2 text-xs font-semibold text-accent">
             <Armchair size={12} />
             Repos : {reposCount}
           </div>
-          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2 text-xs font-semibold text-accent">
             <Footprints size={12} />
             Autre : {autreCount}
           </div>
-          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 py-2 text-xs font-semibold text-red-600 dark:bg-red-500/10 dark:text-red-400">
+          <div className="flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2 text-xs font-semibold text-accent">
             <Music size={12} />
             Pole : {poleCount}
           </div>

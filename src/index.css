@@ -1,7 +1,87 @@
 @import "tailwindcss";
 
+/* The three themes are all dark: `dark:` utilities always apply (<html class="dark">). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Theme colors for utilities such as bg-accent, from-accent to-accent-2, text-on-accent. */
+@theme inline {
+  --color-accent: var(--theme-accent);
+  --color-accent-2: var(--theme-accent-2);
+  --color-on-accent: var(--theme-on-accent);
+}
+
+/*
+ * Themes. Surfaces and text keep their Tailwind names in the markup
+ * (neutral-* for surfaces, slate-* for text), so each theme redefines those
+ * scales plus the accent. Semantic colors (Bon/Neutre/Mauvais, session
+ * types, delete) are left alone. Argent & Papaye is the default.
+ */
+:root {
+  color-scheme: dark;
+  --theme-bg: #080808;
+  --theme-input: #1c2022;
+  --theme-accent: #ff8000;
+  --theme-accent-2: #f2600c;
+  --theme-on-accent: #0b0b0b;
+  --theme-card-sheen: linear-gradient(180deg, rgb(138 149 151 / 0.18), rgb(138 149 151 / 0) 55%);
+  --theme-card-ring: inset 0 0 0 1px rgb(138 149 151 / 0.3);
+  --color-neutral-950: #080808;
+  --color-neutral-900: #16191b;
+  --color-neutral-800: #24292c;
+  --color-neutral-700: #5a6467;
+  --color-neutral-600: #5a6467;
+  --color-slate-100: #f3f5f5;
+  --color-slate-200: #dde2e3;
+  --color-slate-300: #dde2e3;
+  --color-slate-400: #b3bcbe;
+  --color-slate-500: #a0aaad;
+  --color-slate-600: #8a9597;
+}
+
+:root[data-theme='rose'] {
+  --theme-accent: #ffb8d4;
+  --theme-accent-2: #ff1493;
+}
+
+:root[data-theme='lime'] {
+  --theme-bg: #16202c;
+  --theme-input: #22344d;
+  --theme-accent: #ccff00;
+  --theme-accent-2: #9ee01a;
+  --theme-on-accent: #0d1520;
+  --theme-card-sheen: none;
+  --theme-card-ring: none;
+  --color-neutral-950: #16202c;
+  --color-neutral-900: #1c2a3b;
+  --color-neutral-800: #2c4262;
+  --color-neutral-700: #4a6388;
+  --color-neutral-600: #4a6388;
+  --color-slate-100: #f3f7fc;
+  --color-slate-200: #dce5f0;
+  --color-slate-300: #dce5f0;
+  --color-slate-400: #b6c6da;
+  --color-slate-500: #a2b5ce;
+  --color-slate-600: #8299b8;
+}
+
+/* Brushed-metal finish on cards in the silver themes. */
+.rounded-2xl.dark\:bg-neutral-800 {
+  background-image: var(--theme-card-sheen);
+  box-shadow: var(--theme-card-ring);
+}
+
+/* Chart labels follow the theme's secondary text color. */
+.sessions-radar .recharts-polar-angle-axis-tick text,
+.weight-chart .recharts-cartesian-axis-tick text {
+  fill: var(--color-slate-400);
+}
+
+.weight-chart .recharts-line-dots circle {
+  fill: var(--color-accent-2);
 }
 
 @utility input {
@@ -10,18 +90,18 @@
   max-width: 100%;
   min-width: 0;
   border-radius: 1rem;
-  border: 1px solid #e2e8f0;
-  background: white;
+  border: 1px solid var(--color-neutral-700);
+  background: var(--theme-input);
   padding: 0.75rem;
   font-size: 0.875rem;
-  color: #334155;
+  color: var(--color-slate-200);
   -webkit-appearance: none;
   appearance: none;
 }
 
 .input:focus {
   outline: none;
-  border-color: #fb923c;
+  border-color: var(--color-accent);
 }
 
 /* Gradient outline for session types; set --outline-from and --outline-to. */
@@ -43,32 +123,14 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .input {
-    border-color: #404040;
-    background: #262626;
-    color: #e2e8f0;
-  }
-}
-
-:root {
-  color-scheme: light dark;
-}
-
 html, body, #root {
   height: 100%;
 }
 
 body {
-  background: #f4f6fb;
+  background: var(--theme-bg);
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #0a0a0a;
-  }
 }
 
 * {

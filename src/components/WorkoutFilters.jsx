@@ -82,7 +82,7 @@ export default function WorkoutFilters({ filters, history, onChange, resultCount
         <button
           type="button"
           onClick={onClose}
-          className="flex-1 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 py-3 text-sm font-semibold text-white shadow-md shadow-red-600/30 active:scale-[0.98]"
+          className="flex-1 rounded-2xl bg-gradient-to-br from-accent to-accent-2 py-3 text-sm font-semibold text-on-accent shadow-md shadow-accent-2/30 active:scale-[0.98]"
         >
           {resultCount === 0 ? 'Aucune séance' : `Afficher ${resultCount} séance${resultCount > 1 ? 's' : ''}`}
         </button>
